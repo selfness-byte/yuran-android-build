@@ -1,0 +1,14 @@
+outputs/
+**/build/
+work/toolchain/
+work/photo-android/libs/mlkit/cache/
+work/photo-android/libs/mlkit/prepared/
+*.jar
+*.aar
+*.apk
+*.jks
+*.keystore
+*.p12
+*.pem
+.env*
+*password*

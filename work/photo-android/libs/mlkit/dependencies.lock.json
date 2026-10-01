@@ -1,0 +1,2140 @@
+{
+  "schema": 1,
+  "root": "com.google.mlkit:text-recognition-chinese:16.0.1",
+  "repositories": [
+    "https://dl.google.com/dl/android/maven2/",
+    "https://repo.maven.apache.org/maven2/"
+  ],
+  "selection": "highest fixed transitive version; optional/test/provided dependencies omitted; path exclusions retained",
+  "artifacts": [
+    {
+      "coordinate": "androidx.activity:activity:1.6.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/activity/activity/1.6.0/activity-1.6.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/activity/activity/1.6.0/activity-1.6.0.aar",
+        "sha256": "7f08723ecabefba616d60c714b0e9a31301bd4d0792fcc7946c1479c57fd2d28",
+        "bytes": 111229
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.annotation:annotation:1.3.0",
+      "packaging": "jar",
+      "file": {
+        "path": "cache/androidx/annotation/annotation/1.3.0/annotation-1.3.0.jar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation/1.3.0/annotation-1.3.0.jar",
+        "sha256": "97dc45afefe3a1e421da42b8b6e9f90491477c45fc6178203e3a5e8a05ee8553",
+        "bytes": 31705
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.annotation:annotation-experimental:1.3.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/annotation/annotation-experimental/1.3.0/annotation-experimental-1.3.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation-experimental/1.3.0/annotation-experimental-1.3.0.aar",
+        "sha256": "abfd29c8556e5bd0325a9f769ab9e9d154ff4a5515c476cdd5a2a8285b1b19dc",
+        "bytes": 36019
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.appcompat:appcompat:1.6.1",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/appcompat/appcompat/1.6.1/appcompat-1.6.1.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/appcompat/appcompat/1.6.1/appcompat-1.6.1.aar",
+        "sha256": "7ea5573b93ababd3bd32312451c6ea48a662b03a140dda81aebe75776a20a422",
+        "bytes": 1135853
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.appcompat:appcompat-resources:1.6.1",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/appcompat/appcompat-resources/1.6.1/appcompat-resources-1.6.1.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/appcompat/appcompat-resources/1.6.1/appcompat-resources-1.6.1.aar",
+        "sha256": "db915dbf49357863de1669ff9fdd8e9008d65fe357af6cce9ae63043ad5f6617",
+        "bytes": 66329
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.arch.core:core-common:2.1.0",
+      "packaging": "jar",
+      "file": {
+        "path": "cache/androidx/arch/core/core-common/2.1.0/core-common-2.1.0.jar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/arch/core/core-common/2.1.0/core-common-2.1.0.jar",
+        "sha256": "fe1237bf029d063e7f29fe39aeaf73ef74c8b0a3658486fc29d3c54326653889",
+        "bytes": 11257
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.arch.core:core-runtime:2.1.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/arch/core/core-runtime/2.1.0/core-runtime-2.1.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/arch/core/core-runtime/2.1.0/core-runtime-2.1.0.aar",
+        "sha256": "dd77615bd3dd275afb11b62df25bae46b10b4a117cd37943af45bdcbf8755852",
+        "bytes": 6059
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.collection:collection:1.1.0",
+      "packaging": "jar",
+      "file": {
+        "path": "cache/androidx/collection/collection/1.1.0/collection-1.1.0.jar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/collection/collection/1.1.0/collection-1.1.0.jar",
+        "sha256": "632a0e5407461de774409352940e292a291037724207a787820c77daf7d33b72",
+        "bytes": 42953
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.concurrent:concurrent-futures:1.0.0",
+      "packaging": "jar",
+      "file": {
+        "path": "cache/androidx/concurrent/concurrent-futures/1.0.0/concurrent-futures-1.0.0.jar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/concurrent/concurrent-futures/1.0.0/concurrent-futures-1.0.0.jar",
+        "sha256": "5595a40e278a7b39fa78a09490e3d7f3faa95c7b01447148bd38b5ade0605c35",
+        "bytes": 25895
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.core:core:1.9.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/core/core/1.9.0/core-1.9.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/core/core/1.9.0/core-1.9.0.aar",
+        "sha256": "8bda3ee3a88887d54f6679fb6b6cd788629f73234ac91c8bbed924e721ec85b8",
+        "bytes": 1115684
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.core:core-ktx:1.8.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/core/core-ktx/1.8.0/core-ktx-1.8.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/core/core-ktx/1.8.0/core-ktx-1.8.0.aar",
+        "sha256": "1790bb9b0b3efe6a27fb1ba3a3530b0b9aa6654e58bf8a9ef783f767e50d31b4",
+        "bytes": 177796
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.cursoradapter:cursoradapter:1.0.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/cursoradapter/cursoradapter/1.0.0/cursoradapter-1.0.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/cursoradapter/cursoradapter/1.0.0/cursoradapter-1.0.0.aar",
+        "sha256": "a81c8fe78815fa47df5b749deb52727ad11f9397da58b16017f4eb2c11e28564",
+        "bytes": 10591
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.customview:customview:1.0.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/customview/customview/1.0.0/customview-1.0.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/customview/customview/1.0.0/customview-1.0.0.aar",
+        "sha256": "20e5b8f6526a34595a604f56718da81167c0b40a7a94a57daa355663f2594df2",
+        "bytes": 33238
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.drawerlayout:drawerlayout:1.0.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/drawerlayout/drawerlayout/1.0.0/drawerlayout-1.0.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/drawerlayout/drawerlayout/1.0.0/drawerlayout-1.0.0.aar",
+        "sha256": "9402442cdc5a43cf62fb14f8cf98c63342d4d9d9b805c8033c6cf7e802749ac1",
+        "bytes": 32470
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.emoji2:emoji2:1.2.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/emoji2/emoji2/1.2.0/emoji2-1.2.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/emoji2/emoji2/1.2.0/emoji2-1.2.0.aar",
+        "sha256": "f31a06c150ecb03073f55a6f7b0b74a240a6a8d727c14ce76726d020570dfa8c",
+        "bytes": 134505
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.emoji2:emoji2-views-helper:1.2.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/emoji2/emoji2-views-helper/1.2.0/emoji2-views-helper-1.2.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/emoji2/emoji2-views-helper/1.2.0/emoji2-views-helper-1.2.0.aar",
+        "sha256": "7ffa4d464d9db259fca0cdb50fbd4ab63d6872bcda59468b9f7555504c7d5ac4",
+        "bytes": 21917
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.exifinterface:exifinterface:1.0.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/exifinterface/exifinterface/1.0.0/exifinterface-1.0.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/exifinterface/exifinterface/1.0.0/exifinterface-1.0.0.aar",
+        "sha256": "ee48be10aab8f54efff4c14b77d11e10b9eeee4379d5ef6bf297a2923c55cc11",
+        "bytes": 45922
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.fragment:fragment:1.3.6",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/fragment/fragment/1.3.6/fragment-1.3.6.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/fragment/fragment/1.3.6/fragment-1.3.6.aar",
+        "sha256": "12f0831b4f08092d5dda272c1923c11a022ff20ceffed3e801751e21bb8d1c1e",
+        "bytes": 298197
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.interpolator:interpolator:1.0.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/interpolator/interpolator/1.0.0/interpolator-1.0.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/interpolator/interpolator/1.0.0/interpolator-1.0.0.aar",
+        "sha256": "33193135a64fe21fa2c35eec6688f1a76e512606c0fc83dc1b689e37add7732a",
+        "bytes": 7669
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.lifecycle:lifecycle-common:2.5.1",
+      "packaging": "jar",
+      "file": {
+        "path": "cache/androidx/lifecycle/lifecycle-common/2.5.1/lifecycle-common-2.5.1.jar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-common/2.5.1/lifecycle-common-2.5.1.jar",
+        "sha256": "20ad1520f625cf455e6afd7290988306d3a9886efa993e0860fbabf4bb3f7bda",
+        "bytes": 24230
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.lifecycle:lifecycle-livedata:2.0.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/lifecycle/lifecycle-livedata/2.0.0/lifecycle-livedata-2.0.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-livedata/2.0.0/lifecycle-livedata-2.0.0.aar",
+        "sha256": "c82609ced8c498f0a701a30fb6771bb7480860daee84d82e0a81ee86edf7ba39",
+        "bytes": 9431
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.lifecycle:lifecycle-livedata-core:2.5.1",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/lifecycle/lifecycle-livedata-core/2.5.1/lifecycle-livedata-core-2.5.1.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-livedata-core/2.5.1/lifecycle-livedata-core-2.5.1.aar",
+        "sha256": "ee792103ca248bfaf150c45a93871e4cf7e8cebab990e0f62f7de5d4ff2f209f",
+        "bytes": 10078
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.lifecycle:lifecycle-process:2.4.1",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/lifecycle/lifecycle-process/2.4.1/lifecycle-process-2.4.1.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-process/2.4.1/lifecycle-process-2.4.1.aar",
+        "sha256": "db649b3efa24e31052145310b002db91da346b3f89c093ec38c3046db45e794e",
+        "bytes": 9331
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.lifecycle:lifecycle-runtime:2.5.1",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/lifecycle/lifecycle-runtime/2.5.1/lifecycle-runtime-2.5.1.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-runtime/2.5.1/lifecycle-runtime-2.5.1.aar",
+        "sha256": "33b0d73dc2f028fceb3599bacabe563c3db6d26f3513d889595863536a4ac8c0",
+        "bytes": 12288
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.lifecycle:lifecycle-viewmodel:2.5.1",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/lifecycle/lifecycle-viewmodel/2.5.1/lifecycle-viewmodel-2.5.1.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-viewmodel/2.5.1/lifecycle-viewmodel-2.5.1.aar",
+        "sha256": "14a27d5fb8a1436b1b7dec18bebaa66c830cdbbc8e28a81ce5f85b7c33b3ae9d",
+        "bytes": 34830
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.5.1",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/lifecycle/lifecycle-viewmodel-savedstate/2.5.1/lifecycle-viewmodel-savedstate-2.5.1.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-viewmodel-savedstate/2.5.1/lifecycle-viewmodel-savedstate-2.5.1.aar",
+        "sha256": "8481141f97f0e6213dd33fcc89a784c4bd11a6ff7d4779a1cf6a0e9fbdbf24e0",
+        "bytes": 34933
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.loader:loader:1.0.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/loader/loader/1.0.0/loader-1.0.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/loader/loader/1.0.0/loader-1.0.0.aar",
+        "sha256": "11f735cb3b55c458d470bed9e25254375b518b4b1bad6926783a7026db0f5025",
+        "bytes": 33445
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.resourceinspection:resourceinspection-annotation:1.0.1",
+      "packaging": "jar",
+      "file": {
+        "path": "cache/androidx/resourceinspection/resourceinspection-annotation/1.0.1/resourceinspection-annotation-1.0.1.jar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/resourceinspection/resourceinspection-annotation/1.0.1/resourceinspection-annotation-1.0.1.jar",
+        "sha256": "8cff870ec6fb31db48a52f4a792335b4bf8de07e03bd37823181526433ccd5cb",
+        "bytes": 2336
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.savedstate:savedstate:1.2.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/savedstate/savedstate/1.2.0/savedstate-1.2.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/savedstate/savedstate/1.2.0/savedstate-1.2.0.aar",
+        "sha256": "2de528d6898e95ef020d22d9ffdf9d1f77cbdd93f92d39dfaa5d5c43b0c311c8",
+        "bytes": 19326
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.startup:startup-runtime:1.1.1",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/startup/startup-runtime/1.1.1/startup-runtime-1.1.1.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/startup/startup-runtime/1.1.1/startup-runtime-1.1.1.aar",
+        "sha256": "e0a6329a371262fe4c450372b70fdaf33b769ef6917094723787cfce896b1dd3",
+        "bytes": 19371
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.tracing:tracing:1.0.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/tracing/tracing/1.0.0/tracing-1.0.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/tracing/tracing/1.0.0/tracing-1.0.0.aar",
+        "sha256": "07b8b6139665b884a162eccf97891ca50f7f56831233bf25168ae04f7b568612",
+        "bytes": 4444
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.vectordrawable:vectordrawable:1.1.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/vectordrawable/vectordrawable/1.1.0/vectordrawable-1.1.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/vectordrawable/vectordrawable/1.1.0/vectordrawable-1.1.0.aar",
+        "sha256": "46fd633ac01b49b7fcabc263bf098c5a8b9e9a69774d234edcca04fb02df8e26",
+        "bytes": 33236
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.vectordrawable:vectordrawable-animated:1.1.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/vectordrawable/vectordrawable-animated/1.1.0/vectordrawable-animated-1.1.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/vectordrawable/vectordrawable-animated/1.1.0/vectordrawable-animated-1.1.0.aar",
+        "sha256": "76da2c502371d9c38054df5e2b248d00da87809ed058f3363eae87ce5e2403f8",
+        "bytes": 34496
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.versionedparcelable:versionedparcelable:1.1.1",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/versionedparcelable/versionedparcelable/1.1.1/versionedparcelable-1.1.1.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/versionedparcelable/versionedparcelable/1.1.1/versionedparcelable-1.1.1.aar",
+        "sha256": "57e8d93260d18d5b9007c9eed3c64ad159de90c8609ebfc74a347cbd514535a4",
+        "bytes": 31061
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "androidx.viewpager:viewpager:1.0.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/androidx/viewpager/viewpager/1.0.0/viewpager-1.0.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/androidx/viewpager/viewpager/1.0.0/viewpager-1.0.0.aar",
+        "sha256": "147af4e14a1984010d8f155e5e19d781f03c1d70dfed02a8e0d18428b8fc8682",
+        "bytes": 53513
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "com.google.android.datatransport:transport-api:2.2.1",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/com/google/android/datatransport/transport-api/2.2.1/transport-api-2.2.1.aar",
+        "url": "https://dl.google.com/dl/android/maven2/com/google/android/datatransport/transport-api/2.2.1/transport-api-2.2.1.aar",
+        "sha256": "e62f73ba1c7f5d15f5d86d8e9a298c42ccd0648e7ce60b9e312f2ecd123b5ed0",
+        "bytes": 4879
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "com.google.android.datatransport:transport-backend-cct:2.3.3",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/com/google/android/datatransport/transport-backend-cct/2.3.3/transport-backend-cct-2.3.3.aar",
+        "url": "https://dl.google.com/dl/android/maven2/com/google/android/datatransport/transport-backend-cct/2.3.3/transport-backend-cct-2.3.3.aar",
+        "sha256": "b22a14d560a590dc875e902424b29a13a02d1faf297b7c39a9007967ffadccbd",
+        "bytes": 35697
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "com.google.android.datatransport:transport-runtime:2.2.6",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/com/google/android/datatransport/transport-runtime/2.2.6/transport-runtime-2.2.6.aar",
+        "url": "https://dl.google.com/dl/android/maven2/com/google/android/datatransport/transport-runtime/2.2.6/transport-runtime-2.2.6.aar",
+        "sha256": "d83ad23c134429691161c92476a3c83df236cd1f8badbfd4f00723b4eccd741c",
+        "bytes": 97859
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "com.google.android.gms:play-services-base:18.5.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/com/google/android/gms/play-services-base/18.5.0/play-services-base-18.5.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/com/google/android/gms/play-services-base/18.5.0/play-services-base-18.5.0.aar",
+        "sha256": "59a5c0c2da12311d75d965ce1f419498536b1a167fb28ff7dfc2dfd9cefa4157",
+        "bytes": 439602
+      },
+      "licenses": [
+        {
+          "name": "Android Software Development Kit License",
+          "url": "https://developer.android.com/studio/terms.html"
+        }
+      ]
+    },
+    {
+      "coordinate": "com.google.android.gms:play-services-basement:18.4.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/com/google/android/gms/play-services-basement/18.4.0/play-services-basement-18.4.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/com/google/android/gms/play-services-basement/18.4.0/play-services-basement-18.4.0.aar",
+        "sha256": "ce5c936fd66814b3602f5c6a5e929911ff973d4b05f6de9996da596bef97cad2",
+        "bytes": 286283
+      },
+      "licenses": [
+        {
+          "name": "Android Software Development Kit License",
+          "url": "https://developer.android.com/studio/terms.html"
+        }
+      ]
+    },
+    {
+      "coordinate": "com.google.android.gms:play-services-mlkit-text-recognition-chinese:16.0.1",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/com/google/android/gms/play-services-mlkit-text-recognition-chinese/16.0.1/play-services-mlkit-text-recognition-chinese-16.0.1.aar",
+        "url": "https://dl.google.com/dl/android/maven2/com/google/android/gms/play-services-mlkit-text-recognition-chinese/16.0.1/play-services-mlkit-text-recognition-chinese-16.0.1.aar",
+        "sha256": "0a3edb3967097536f72ab7bd68496c624a0752ceff5c31a4bc88d20c6f668e06",
+        "bytes": 78105
+      },
+      "licenses": [
+        {
+          "name": "ML Kit Terms of Service",
+          "url": "https://developers.google.com/ml-kit/terms"
+        }
+      ]
+    },
+    {
+      "coordinate": "com.google.android.gms:play-services-mlkit-text-recognition-common:19.1.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/com/google/android/gms/play-services-mlkit-text-recognition-common/19.1.0/play-services-mlkit-text-recognition-common-19.1.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/com/google/android/gms/play-services-mlkit-text-recognition-common/19.1.0/play-services-mlkit-text-recognition-common-19.1.0.aar",
+        "sha256": "3be02b3c3c829476100f01d0ab79f0b4a923da23909d3ac63e486d1a63381c58",
+        "bytes": 437936
+      },
+      "licenses": [
+        {
+          "name": "ML Kit Terms of Service",
+          "url": "https://developers.google.com/ml-kit/terms"
+        }
+      ]
+    },
+    {
+      "coordinate": "com.google.android.gms:play-services-tasks:18.2.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/com/google/android/gms/play-services-tasks/18.2.0/play-services-tasks-18.2.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/com/google/android/gms/play-services-tasks/18.2.0/play-services-tasks-18.2.0.aar",
+        "sha256": "7f2aaa8f502068eaf54356ca92aec04271d6e7c416c52c45c0d23440fcbd1654",
+        "bytes": 80343
+      },
+      "licenses": [
+        {
+          "name": "Android Software Development Kit License",
+          "url": "https://developer.android.com/studio/terms.html"
+        }
+      ]
+    },
+    {
+      "coordinate": "com.google.android.odml:image:1.0.0-beta1",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/com/google/android/odml/image/1.0.0-beta1/image-1.0.0-beta1.aar",
+        "url": "https://dl.google.com/dl/android/maven2/com/google/android/odml/image/1.0.0-beta1/image-1.0.0-beta1.aar",
+        "sha256": "2e71aa31f83a9415277f119de67195726f07d1760e9542c111778c320e3aa1f2",
+        "bytes": 23893
+      },
+      "licenses": [
+        {
+          "name": "Android Software Development Kit License",
+          "url": "https://developer.android.com/studio/terms.html"
+        }
+      ]
+    },
+    {
+      "coordinate": "com.google.firebase:firebase-annotations:16.0.0",
+      "packaging": "jar",
+      "file": {
+        "path": "cache/com/google/firebase/firebase-annotations/16.0.0/firebase-annotations-16.0.0.jar",
+        "url": "https://dl.google.com/dl/android/maven2/com/google/firebase/firebase-annotations/16.0.0/firebase-annotations-16.0.0.jar",
+        "sha256": "8830f2e8a5e434cbc5e4bd18133073b6e8518a8ce8ec2ce6f3b273c91d9664c2",
+        "bytes": 921
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "com.google.firebase:firebase-components:16.1.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/com/google/firebase/firebase-components/16.1.0/firebase-components-16.1.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/com/google/firebase/firebase-components/16.1.0/firebase-components-16.1.0.aar",
+        "sha256": "82e91aa5ed186eedaf1f2210f5d241ba6e4456cf0c32949d5cdbe152b0e2e88b",
+        "bytes": 30176
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "com.google.firebase:firebase-encoders:16.1.0",
+      "packaging": "jar",
+      "file": {
+        "path": "cache/com/google/firebase/firebase-encoders/16.1.0/firebase-encoders-16.1.0.jar",
+        "url": "https://dl.google.com/dl/android/maven2/com/google/firebase/firebase-encoders/16.1.0/firebase-encoders-16.1.0.jar",
+        "sha256": "8f89a74298bbccc2c543385208a2f0c67f603ce67e6ec21cc772e98e688f7cf5",
+        "bytes": 17847
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "com.google.firebase:firebase-encoders-json:17.1.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/com/google/firebase/firebase-encoders-json/17.1.0/firebase-encoders-json-17.1.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/com/google/firebase/firebase-encoders-json/17.1.0/firebase-encoders-json-17.1.0.aar",
+        "sha256": "8295c755bcadc87a2aaee5b9e568f27fd138fd45ff1159a8ee747cf4c3a38d85",
+        "bytes": 9451
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "com.google.guava:listenablefuture:1.0",
+      "packaging": "jar",
+      "file": {
+        "path": "cache/com/google/guava/listenablefuture/1.0/listenablefuture-1.0.jar",
+        "url": "https://repo.maven.apache.org/maven2/com/google/guava/listenablefuture/1.0/listenablefuture-1.0.jar",
+        "sha256": "e4ad7607e5c0477c6f890ef26a49cb8d1bb4dffb650bab4502afee64644e3069",
+        "bytes": 3149
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "com.google.mlkit:common:18.11.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/com/google/mlkit/common/18.11.0/common-18.11.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/com/google/mlkit/common/18.11.0/common-18.11.0.aar",
+        "sha256": "66408a08dbb2465687ff5dd0c8f6410b56549ce3ecf449d9096f3712282131d0",
+        "bytes": 434066
+      },
+      "licenses": [
+        {
+          "name": "ML Kit Terms of Service",
+          "url": "https://developers.google.com/ml-kit/terms"
+        }
+      ]
+    },
+    {
+      "coordinate": "com.google.mlkit:text-recognition-bundled-common:17.0.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/com/google/mlkit/text-recognition-bundled-common/17.0.0/text-recognition-bundled-common-17.0.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/com/google/mlkit/text-recognition-bundled-common/17.0.0/text-recognition-bundled-common-17.0.0.aar",
+        "sha256": "fb1d4e26d69125659b6f5a94f03cce145544b0116807d04333335a9775636e05",
+        "bytes": 17960748
+      },
+      "licenses": [
+        {
+          "name": "ML Kit Terms of Service",
+          "url": "https://developers.google.com/ml-kit/terms"
+        }
+      ]
+    },
+    {
+      "coordinate": "com.google.mlkit:text-recognition-chinese:16.0.1",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/com/google/mlkit/text-recognition-chinese/16.0.1/text-recognition-chinese-16.0.1.aar",
+        "url": "https://dl.google.com/dl/android/maven2/com/google/mlkit/text-recognition-chinese/16.0.1/text-recognition-chinese-16.0.1.aar",
+        "sha256": "cb81f8036a6410e036cff88350ee8548e5258ff6f9e2ffbc7455defa7f672dbe",
+        "bytes": 2036186
+      },
+      "licenses": [
+        {
+          "name": "ML Kit Terms of Service",
+          "url": "https://developers.google.com/ml-kit/terms"
+        }
+      ]
+    },
+    {
+      "coordinate": "com.google.mlkit:vision-common:17.3.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/com/google/mlkit/vision-common/17.3.0/vision-common-17.3.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/com/google/mlkit/vision-common/17.3.0/vision-common-17.3.0.aar",
+        "sha256": "c0085ca5fba00f11529c0a83b12851ea6c599bbcc8affd927e914b29a743459f",
+        "bytes": 269178
+      },
+      "licenses": [
+        {
+          "name": "ML Kit Terms of Service",
+          "url": "https://developers.google.com/ml-kit/terms"
+        }
+      ]
+    },
+    {
+      "coordinate": "com.google.mlkit:vision-interfaces:16.3.0",
+      "packaging": "aar",
+      "file": {
+        "path": "cache/com/google/mlkit/vision-interfaces/16.3.0/vision-interfaces-16.3.0.aar",
+        "url": "https://dl.google.com/dl/android/maven2/com/google/mlkit/vision-interfaces/16.3.0/vision-interfaces-16.3.0.aar",
+        "sha256": "8f0192a26d01b728a01a15a620d829fff7095822822694438a93127c04cb16fb",
+        "bytes": 73882
+      },
+      "licenses": [
+        {
+          "name": "ML Kit Terms of Service",
+          "url": "https://developers.google.com/ml-kit/terms"
+        }
+      ]
+    },
+    {
+      "coordinate": "javax.inject:javax.inject:1",
+      "packaging": "jar",
+      "file": {
+        "path": "cache/javax/inject/javax.inject/1/javax.inject-1.jar",
+        "url": "https://repo.maven.apache.org/maven2/javax/inject/javax.inject/1/javax.inject-1.jar",
+        "sha256": "91c77044a50c481636c32d916fd89c9118a72195390452c81065080f957de7ff",
+        "bytes": 2497
+      },
+      "licenses": []
+    },
+    {
+      "coordinate": "org.jetbrains:annotations:13.0",
+      "packaging": "jar",
+      "file": {
+        "path": "cache/org/jetbrains/annotations/13.0/annotations-13.0.jar",
+        "url": "https://repo.maven.apache.org/maven2/org/jetbrains/annotations/13.0/annotations-13.0.jar",
+        "sha256": "ace2a10dc8e2d5fd34925ecac03e4988b2c0f851650c94b8cef49ba1bd111478",
+        "bytes": 17536
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "org.jetbrains.kotlin:kotlin-stdlib:1.7.10",
+      "packaging": "jar",
+      "file": {
+        "path": "cache/org/jetbrains/kotlin/kotlin-stdlib/1.7.10/kotlin-stdlib-1.7.10.jar",
+        "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/1.7.10/kotlin-stdlib-1.7.10.jar",
+        "sha256": "e771fe74250a943e8f6346713201ff1d8cb95c3a5d1a91a22b65a9e04f6a8901",
+        "bytes": 1524620
+      },
+      "licenses": [
+        {
+          "name": "The Apache License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "org.jetbrains.kotlin:kotlin-stdlib-common:1.7.10",
+      "packaging": "jar",
+      "file": {
+        "path": "cache/org/jetbrains/kotlin/kotlin-stdlib-common/1.7.10/kotlin-stdlib-common-1.7.10.jar",
+        "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-common/1.7.10/kotlin-stdlib-common-1.7.10.jar",
+        "sha256": "19f102efe9629f8eabc63853ad15c533e47c47f91fca09285c5bde86e59f91d4",
+        "bytes": 198936
+      },
+      "licenses": [
+        {
+          "name": "The Apache License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.6.0",
+      "packaging": "jar",
+      "file": {
+        "path": "cache/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.0/kotlin-stdlib-jdk7-1.6.0.jar",
+        "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.0/kotlin-stdlib-jdk7-1.6.0.jar",
+        "sha256": "870d35fd266b2daf64c1080fe51824d3c368f7995384a8d7c5fc2fdc40eb7b3a",
+        "bytes": 22357
+      },
+      "licenses": [
+        {
+          "name": "The Apache License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.0",
+      "packaging": "jar",
+      "file": {
+        "path": "cache/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.0/kotlin-stdlib-jdk8-1.6.0.jar",
+        "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.0/kotlin-stdlib-jdk8-1.6.0.jar",
+        "sha256": "ab0547c495953214a5f2b28150014f4e02133678d52b77d76375ea235e443dbd",
+        "bytes": 16201
+      },
+      "licenses": [
+        {
+          "name": "The Apache License, Version 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.1",
+      "packaging": "jar",
+      "file": {
+        "path": "cache/org/jetbrains/kotlinx/kotlinx-coroutines-android/1.6.1/kotlinx-coroutines-android-1.6.1.jar",
+        "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-android/1.6.1/kotlinx-coroutines-android-1.6.1.jar",
+        "sha256": "961ebde8138779a299430ca325a86e28c490527a87ba518362fa45c44c7e7e95",
+        "bytes": 19515
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "https://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    },
+    {
+      "coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.1",
+      "packaging": "jar",
+      "file": {
+        "path": "cache/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.1/kotlinx-coroutines-core-jvm-1.6.1.jar",
+        "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.1/kotlinx-coroutines-core-jvm-1.6.1.jar",
+        "sha256": "3a93ffd052844643c0fef950ae5578db47cccbe9e7176d681333182e232bb0f1",
+        "bytes": 1492143
+      },
+      "licenses": [
+        {
+          "name": "The Apache Software License, Version 2.0",
+          "url": "https://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      ]
+    }
+  ],
+  "metadata": [
+    {
+      "path": "cache/androidx/activity/activity/1.0.0/activity-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/activity/activity/1.0.0/activity-1.0.0.pom",
+      "sha256": "27a4be7462629c312da0b831a0978d2076fc34074145fb61dd4e86d7c8469b82",
+      "bytes": 2512
+    },
+    {
+      "path": "cache/androidx/activity/activity/1.2.4/activity-1.2.4.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/activity/activity/1.2.4/activity-1.2.4.pom",
+      "sha256": "9024dd9873d9e6e29af38c4e2aa096087709db7af3ebcd32a8d17d7bfc53f466",
+      "bytes": 3223
+    },
+    {
+      "path": "cache/androidx/activity/activity/1.6.0/activity-1.6.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/activity/activity/1.6.0/activity-1.6.0.aar",
+      "sha256": "7f08723ecabefba616d60c714b0e9a31301bd4d0792fcc7946c1479c57fd2d28",
+      "bytes": 111229
+    },
+    {
+      "path": "cache/androidx/activity/activity/1.6.0/activity-1.6.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/activity/activity/1.6.0/activity-1.6.0.pom",
+      "sha256": "d582a901fdbabfc138b0c4082763c3e50da771e18dd12b394341e38e5cc14f19",
+      "bytes": 3663
+    },
+    {
+      "path": "cache/androidx/annotation/annotation-experimental/1.0.0/annotation-experimental-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation-experimental/1.0.0/annotation-experimental-1.0.0.pom",
+      "sha256": "6b73ff6608f4b1d6cbab620b65708a382d0b39901cf4e6b0d16f84a1b04d7732",
+      "bytes": 1312
+    },
+    {
+      "path": "cache/androidx/annotation/annotation-experimental/1.1.0/annotation-experimental-1.1.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation-experimental/1.1.0/annotation-experimental-1.1.0.pom",
+      "sha256": "550a6601e1af47cf99501cc6cc15d1ebe9cef17b51e5dd58b6ab6c23568ef7a9",
+      "bytes": 1725
+    },
+    {
+      "path": "cache/androidx/annotation/annotation-experimental/1.3.0/annotation-experimental-1.3.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation-experimental/1.3.0/annotation-experimental-1.3.0.aar",
+      "sha256": "abfd29c8556e5bd0325a9f769ab9e9d154ff4a5515c476cdd5a2a8285b1b19dc",
+      "bytes": 36019
+    },
+    {
+      "path": "cache/androidx/annotation/annotation-experimental/1.3.0/annotation-experimental-1.3.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation-experimental/1.3.0/annotation-experimental-1.3.0.pom",
+      "sha256": "ba2fe46f74f68851e234246193ab896c0c01fa094cd372c1051b6bf04d79b0bb",
+      "bytes": 1947
+    },
+    {
+      "path": "cache/androidx/annotation/annotation/1.0.0/annotation-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation/1.0.0/annotation-1.0.0.pom",
+      "sha256": "a179c12db43d9c0300c9db63f4811db496504be5401b951d422b78490ad1e5b4",
+      "bytes": 1309
+    },
+    {
+      "path": "cache/androidx/annotation/annotation/1.0.2/annotation-1.0.2.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation/1.0.2/annotation-1.0.2.pom",
+      "sha256": "5c868549925a588e117a185ead865807ad8822676e0d7c804c2747d8dd5866f9",
+      "bytes": 1309
+    },
+    {
+      "path": "cache/androidx/annotation/annotation/1.1.0/annotation-1.1.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation/1.1.0/annotation-1.1.0.pom",
+      "sha256": "2e9372ba7780ef44952adbf86b66e1f08682c1e5277c926185f6564a13799efe",
+      "bytes": 1309
+    },
+    {
+      "path": "cache/androidx/annotation/annotation/1.2.0/annotation-1.2.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation/1.2.0/annotation-1.2.0.pom",
+      "sha256": "62fb6dca2777efe08e7077d6b872d69110619df7fc21c99a6f54066499cc0383",
+      "bytes": 1706
+    },
+    {
+      "path": "cache/androidx/annotation/annotation/1.3.0/annotation-1.3.0.jar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation/1.3.0/annotation-1.3.0.jar",
+      "sha256": "97dc45afefe3a1e421da42b8b6e9f90491477c45fc6178203e3a5e8a05ee8553",
+      "bytes": 31705
+    },
+    {
+      "path": "cache/androidx/annotation/annotation/1.3.0/annotation-1.3.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation/1.3.0/annotation-1.3.0.pom",
+      "sha256": "049517c5256a4bbc8529fcdc90c4eaaf358180ac205c91660767df26465efbb0",
+      "bytes": 1707
+    },
+    {
+      "path": "cache/androidx/appcompat/appcompat-resources/1.6.1/appcompat-resources-1.6.1.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/appcompat/appcompat-resources/1.6.1/appcompat-resources-1.6.1.aar",
+      "sha256": "db915dbf49357863de1669ff9fdd8e9008d65fe357af6cce9ae63043ad5f6617",
+      "bytes": 66329
+    },
+    {
+      "path": "cache/androidx/appcompat/appcompat-resources/1.6.1/appcompat-resources-1.6.1.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/appcompat/appcompat-resources/1.6.1/appcompat-resources-1.6.1.pom",
+      "sha256": "d9fd339b2b637051ba5934c8d87c7b9c7d368d47b5fa847d6c269da2852cfc63",
+      "bytes": 3017
+    },
+    {
+      "path": "cache/androidx/appcompat/appcompat/1.6.1/appcompat-1.6.1.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/appcompat/appcompat/1.6.1/appcompat-1.6.1.aar",
+      "sha256": "7ea5573b93ababd3bd32312451c6ea48a662b03a140dda81aebe75776a20a422",
+      "bytes": 1135853
+    },
+    {
+      "path": "cache/androidx/appcompat/appcompat/1.6.1/appcompat-1.6.1.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/appcompat/appcompat/1.6.1/appcompat-1.6.1.pom",
+      "sha256": "962dda9beaf8d1c2cc51ffd2ce2be293ebca7172a76ac0cf3470113365cf8088",
+      "bytes": 5288
+    },
+    {
+      "path": "cache/androidx/arch/core/core-common/2.0.0/core-common-2.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/arch/core/core-common/2.0.0/core-common-2.0.0.pom",
+      "sha256": "4b6f1d459ddd146b4e85ed6d46e86eb8c2639c5de47904e6db4d698721334220",
+      "bytes": 1648
+    },
+    {
+      "path": "cache/androidx/arch/core/core-common/2.0.1/core-common-2.0.1.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/arch/core/core-common/2.0.1/core-common-2.0.1.pom",
+      "sha256": "25e8d785ec2c7c99e2b3b4e88d0c0da7083530a7aca80c8583534a92dad93935",
+      "bytes": 1648
+    },
+    {
+      "path": "cache/androidx/arch/core/core-common/2.1.0/core-common-2.1.0.jar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/arch/core/core-common/2.1.0/core-common-2.1.0.jar",
+      "sha256": "fe1237bf029d063e7f29fe39aeaf73ef74c8b0a3658486fc29d3c54326653889",
+      "bytes": 11257
+    },
+    {
+      "path": "cache/androidx/arch/core/core-common/2.1.0/core-common-2.1.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/arch/core/core-common/2.1.0/core-common-2.1.0.pom",
+      "sha256": "83bbb3960eaabc600ac366c94cb59414e441532a1d6aa9388b0b8bfface5cf01",
+      "bytes": 1315
+    },
+    {
+      "path": "cache/androidx/arch/core/core-runtime/2.0.0/core-runtime-2.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/arch/core/core-runtime/2.0.0/core-runtime-2.0.0.pom",
+      "sha256": "e2007d41ddc69ee2a77fed7b5c1dc5a41e01122926ba59696aab7b18d2264411",
+      "bytes": 1529
+    },
+    {
+      "path": "cache/androidx/arch/core/core-runtime/2.1.0/core-runtime-2.1.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/arch/core/core-runtime/2.1.0/core-runtime-2.1.0.aar",
+      "sha256": "dd77615bd3dd275afb11b62df25bae46b10b4a117cd37943af45bdcbf8755852",
+      "bytes": 6059
+    },
+    {
+      "path": "cache/androidx/arch/core/core-runtime/2.1.0/core-runtime-2.1.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/arch/core/core-runtime/2.1.0/core-runtime-2.1.0.pom",
+      "sha256": "c0c4ed0160cd2ca18390015de8b392b697c173327c6b2c0947d4e62f6958c05d",
+      "bytes": 1531
+    },
+    {
+      "path": "cache/androidx/asynclayoutinflater/asynclayoutinflater/1.0.0/asynclayoutinflater-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/asynclayoutinflater/asynclayoutinflater/1.0.0/asynclayoutinflater-1.0.0.pom",
+      "sha256": "48167eeedc8da79c4d29deaf0d0cd9b5d8fedcae01f1a6efb3f28f08e8982f71",
+      "bytes": 1823
+    },
+    {
+      "path": "cache/androidx/collection/collection/1.0.0/collection-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/collection/collection/1.0.0/collection-1.0.0.pom",
+      "sha256": "a7913a5275ad68e555d2612ebe8c14c367b153e14ca48a1872a64899020e54ef",
+      "bytes": 1497
+    },
+    {
+      "path": "cache/androidx/collection/collection/1.1.0/collection-1.1.0.jar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/collection/collection/1.1.0/collection-1.1.0.jar",
+      "sha256": "632a0e5407461de774409352940e292a291037724207a787820c77daf7d33b72",
+      "bytes": 42953
+    },
+    {
+      "path": "cache/androidx/collection/collection/1.1.0/collection-1.1.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/collection/collection/1.1.0/collection-1.1.0.pom",
+      "sha256": "67e9066ca4acfdc6e3cc508293c31ba0398057ff118e4f70b1e1813c9a3456d1",
+      "bytes": 1338
+    },
+    {
+      "path": "cache/androidx/concurrent/concurrent-futures/1.0.0/concurrent-futures-1.0.0.jar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/concurrent/concurrent-futures/1.0.0/concurrent-futures-1.0.0.jar",
+      "sha256": "5595a40e278a7b39fa78a09490e3d7f3faa95c7b01447148bd38b5ade0605c35",
+      "bytes": 25895
+    },
+    {
+      "path": "cache/androidx/concurrent/concurrent-futures/1.0.0/concurrent-futures-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/concurrent/concurrent-futures/1.0.0/concurrent-futures-1.0.0.pom",
+      "sha256": "4505b9a5e30a9418b59a9ad6702c3e4193aea6e691a3d03cf220c7640ad083e2",
+      "bytes": 1535
+    },
+    {
+      "path": "cache/androidx/coordinatorlayout/coordinatorlayout/1.0.0/coordinatorlayout-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/coordinatorlayout/coordinatorlayout/1.0.0/coordinatorlayout-1.0.0.pom",
+      "sha256": "3e44e4de2fee6debc33d23626ee906e54e1bb3c1749b19e02bb667b614ab9392",
+      "bytes": 2021
+    },
+    {
+      "path": "cache/androidx/core/core-ktx/1.2.0/core-ktx-1.2.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/core/core-ktx/1.2.0/core-ktx-1.2.0.pom",
+      "sha256": "29eaddba4e6a35e68a128e594ebae3b72ef7e767f1b273ef93dc2ed019ff97f6",
+      "bytes": 1710
+    },
+    {
+      "path": "cache/androidx/core/core-ktx/1.8.0/core-ktx-1.8.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/core/core-ktx/1.8.0/core-ktx-1.8.0.aar",
+      "sha256": "1790bb9b0b3efe6a27fb1ba3a3530b0b9aa6654e58bf8a9ef783f767e50d31b4",
+      "bytes": 177796
+    },
+    {
+      "path": "cache/androidx/core/core-ktx/1.8.0/core-ktx-1.8.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/core/core-ktx/1.8.0/core-ktx-1.8.0.pom",
+      "sha256": "8d07ac58554c2916e8d33dffbb7b13b4a75786901e508ae283a75b8c2eb02baf",
+      "bytes": 2121
+    },
+    {
+      "path": "cache/androidx/core/core/1.0.0/core-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/core/core/1.0.0/core-1.0.0.pom",
+      "sha256": "384d529ad668ada4808de29b29a6348f0007c2841ad79cae9a5a089bd68810f5",
+      "bytes": 2201
+    },
+    {
+      "path": "cache/androidx/core/core/1.1.0/core-1.1.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/core/core/1.1.0/core-1.1.0.pom",
+      "sha256": "dae46132cdcd46b798425f7cb78fd65890869b6d26101ccdcd43461a4f51754c",
+      "bytes": 2367
+    },
+    {
+      "path": "cache/androidx/core/core/1.2.0/core-1.2.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/core/core/1.2.0/core-1.2.0.pom",
+      "sha256": "3d1f4e37b77dd92353879a040ab4ce2f706798bcbdf066147491c3642b3f79a6",
+      "bytes": 2181
+    },
+    {
+      "path": "cache/androidx/core/core/1.3.0/core-1.3.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/core/core/1.3.0/core-1.3.0.pom",
+      "sha256": "3ea5d60db139d9fbc5c5f7ac06d779fb75dafe71b0931bc9db863231294bc2d5",
+      "bytes": 2181
+    },
+    {
+      "path": "cache/androidx/core/core/1.6.0/core-1.6.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/core/core/1.6.0/core-1.6.0.pom",
+      "sha256": "3209475e3dde2cd0dcc60840430f51c19ccf2c08c656e123d6cc50c646fa66e8",
+      "bytes": 2811
+    },
+    {
+      "path": "cache/androidx/core/core/1.8.0/core-1.8.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/core/core/1.8.0/core-1.8.0.pom",
+      "sha256": "79ecc797a5d200c4be3f6756d2cbb6fa46fe582192304377e8a6410f6066eb3e",
+      "bytes": 3000
+    },
+    {
+      "path": "cache/androidx/core/core/1.9.0/core-1.9.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/core/core/1.9.0/core-1.9.0.aar",
+      "sha256": "8bda3ee3a88887d54f6679fb6b6cd788629f73234ac91c8bbed924e721ec85b8",
+      "bytes": 1115684
+    },
+    {
+      "path": "cache/androidx/core/core/1.9.0/core-1.9.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/core/core/1.9.0/core-1.9.0.pom",
+      "sha256": "9da661085bb2a3ca44c07125d0cefbdd4a00d65b841a53bdb2d5600b6421e0ea",
+      "bytes": 3245
+    },
+    {
+      "path": "cache/androidx/cursoradapter/cursoradapter/1.0.0/cursoradapter-1.0.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/cursoradapter/cursoradapter/1.0.0/cursoradapter-1.0.0.aar",
+      "sha256": "a81c8fe78815fa47df5b749deb52727ad11f9397da58b16017f4eb2c11e28564",
+      "bytes": 10591
+    },
+    {
+      "path": "cache/androidx/cursoradapter/cursoradapter/1.0.0/cursoradapter-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/cursoradapter/cursoradapter/1.0.0/cursoradapter-1.0.0.pom",
+      "sha256": "62d95c89850af21030b19f14d5f7ecd6d8bcc9a3014c59002ec99624caac8100",
+      "bytes": 1611
+    },
+    {
+      "path": "cache/androidx/customview/customview/1.0.0/customview-1.0.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/customview/customview/1.0.0/customview-1.0.0.aar",
+      "sha256": "20e5b8f6526a34595a604f56718da81167c0b40a7a94a57daa355663f2594df2",
+      "bytes": 33238
+    },
+    {
+      "path": "cache/androidx/customview/customview/1.0.0/customview-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/customview/customview/1.0.0/customview-1.0.0.pom",
+      "sha256": "ce9e47b87184f5bd5e139e9becd5b26476d42d78c31bf2fdedc37acb41b9ad49",
+      "bytes": 1795
+    },
+    {
+      "path": "cache/androidx/documentfile/documentfile/1.0.0/documentfile-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/documentfile/documentfile/1.0.0/documentfile-1.0.0.pom",
+      "sha256": "013288a9317a552706ce625fb24493e8223288529223ec578cf855a5ae9c16e5",
+      "bytes": 1608
+    },
+    {
+      "path": "cache/androidx/drawerlayout/drawerlayout/1.0.0/drawerlayout-1.0.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/drawerlayout/drawerlayout/1.0.0/drawerlayout-1.0.0.aar",
+      "sha256": "9402442cdc5a43cf62fb14f8cf98c63342d4d9d9b805c8033c6cf7e802749ac1",
+      "bytes": 32470
+    },
+    {
+      "path": "cache/androidx/drawerlayout/drawerlayout/1.0.0/drawerlayout-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/drawerlayout/drawerlayout/1.0.0/drawerlayout-1.0.0.pom",
+      "sha256": "da6733425a83f5ce850878fa7201082345fed7c668dd58550fdd19c0396c6fa4",
+      "bytes": 2006
+    },
+    {
+      "path": "cache/androidx/emoji2/emoji2-views-helper/1.2.0/emoji2-views-helper-1.2.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/emoji2/emoji2-views-helper/1.2.0/emoji2-views-helper-1.2.0.aar",
+      "sha256": "7ffa4d464d9db259fca0cdb50fbd4ab63d6872bcda59468b9f7555504c7d5ac4",
+      "bytes": 21917
+    },
+    {
+      "path": "cache/androidx/emoji2/emoji2-views-helper/1.2.0/emoji2-views-helper-1.2.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/emoji2/emoji2-views-helper/1.2.0/emoji2-views-helper-1.2.0.pom",
+      "sha256": "db59052e89d13b79464b04bd1f874d797f1d97d83f4937f669a53e1f68a80237",
+      "bytes": 2146
+    },
+    {
+      "path": "cache/androidx/emoji2/emoji2/1.2.0/emoji2-1.2.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/emoji2/emoji2/1.2.0/emoji2-1.2.0.aar",
+      "sha256": "f31a06c150ecb03073f55a6f7b0b74a240a6a8d727c14ce76726d020570dfa8c",
+      "bytes": 134505
+    },
+    {
+      "path": "cache/androidx/emoji2/emoji2/1.2.0/emoji2-1.2.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/emoji2/emoji2/1.2.0/emoji2-1.2.0.pom",
+      "sha256": "faf5955d2c9b09bba92e51569f2b928419ded05b5c9649c0453c925c7da62360",
+      "bytes": 2605
+    },
+    {
+      "path": "cache/androidx/exifinterface/exifinterface/1.0.0/exifinterface-1.0.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/exifinterface/exifinterface/1.0.0/exifinterface-1.0.0.aar",
+      "sha256": "ee48be10aab8f54efff4c14b77d11e10b9eeee4379d5ef6bf297a2923c55cc11",
+      "bytes": 45922
+    },
+    {
+      "path": "cache/androidx/exifinterface/exifinterface/1.0.0/exifinterface-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/exifinterface/exifinterface/1.0.0/exifinterface-1.0.0.pom",
+      "sha256": "ee15ccb739fa8ab72e48649e53a3def0ee2d5a110736018e781df00437fbf2b3",
+      "bytes": 1363
+    },
+    {
+      "path": "cache/androidx/fragment/fragment/1.0.0/fragment-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/fragment/fragment/1.0.0/fragment-1.0.0.pom",
+      "sha256": "e329d673361e94d2e8f4d4d14e1f0586368bd43fb19efd5766ce7498bcccd162",
+      "bytes": 2627
+    },
+    {
+      "path": "cache/androidx/fragment/fragment/1.1.0/fragment-1.1.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/fragment/fragment/1.1.0/fragment-1.1.0.pom",
+      "sha256": "ef78eb27ac02ddf3545d5f8a3857c73a2837a01853f8d5fcf77251011db52544",
+      "bytes": 3100
+    },
+    {
+      "path": "cache/androidx/fragment/fragment/1.3.6/fragment-1.3.6.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/fragment/fragment/1.3.6/fragment-1.3.6.aar",
+      "sha256": "12f0831b4f08092d5dda272c1923c11a022ff20ceffed3e801751e21bb8d1c1e",
+      "bytes": 298197
+    },
+    {
+      "path": "cache/androidx/fragment/fragment/1.3.6/fragment-1.3.6.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/fragment/fragment/1.3.6/fragment-1.3.6.pom",
+      "sha256": "a470f6744cbf8ab09b477193030a0d27fd4938cf717b5b982f7e6a0ab6e85c55",
+      "bytes": 4043
+    },
+    {
+      "path": "cache/androidx/interpolator/interpolator/1.0.0/interpolator-1.0.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/interpolator/interpolator/1.0.0/interpolator-1.0.0.aar",
+      "sha256": "33193135a64fe21fa2c35eec6688f1a76e512606c0fc83dc1b689e37add7732a",
+      "bytes": 7669
+    },
+    {
+      "path": "cache/androidx/interpolator/interpolator/1.0.0/interpolator-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/interpolator/interpolator/1.0.0/interpolator-1.0.0.pom",
+      "sha256": "0ddc07cc39699f48ecd9ec894b5830c0f09e22e82959294edf37217224c88b7b",
+      "bytes": 1608
+    },
+    {
+      "path": "cache/androidx/legacy/legacy-support-core-ui/1.0.0/legacy-support-core-ui-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/legacy/legacy-support-core-ui/1.0.0/legacy-support-core-ui-1.0.0.pom",
+      "sha256": "2baaf7f17551765524bd1e4d2f954a2a0178a112039cf549ba8b7d4b41e66931",
+      "bytes": 3934
+    },
+    {
+      "path": "cache/androidx/legacy/legacy-support-core-utils/1.0.0/legacy-support-core-utils-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/legacy/legacy-support-core-utils/1.0.0/legacy-support-core-utils-1.0.0.pom",
+      "sha256": "8fd093008b3ee7c06e52c78da2af980a7b47b69b967fa91dad7af466f7a00a38",
+      "bytes": 2633
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-common/2.0.0/lifecycle-common-2.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-common/2.0.0/lifecycle-common-2.0.0.pom",
+      "sha256": "04d525073469214d0c99e81aaa875dd548ba32b82945abd8326bc50229df700d",
+      "bytes": 1663
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-common/2.1.0/lifecycle-common-2.1.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-common/2.1.0/lifecycle-common-2.1.0.pom",
+      "sha256": "692c2a60437a95220c8fbb6e8943196f255f535d1a7c58714e6c46530782f276",
+      "bytes": 1330
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-common/2.3.1/lifecycle-common-2.3.1.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-common/2.3.1/lifecycle-common-2.3.1.pom",
+      "sha256": "8cd23d889a14095c6ce16840d29b1a6388fa5e115144c1309d4d6d469c1bc351",
+      "bytes": 1719
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-common/2.4.0/lifecycle-common-2.4.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-common/2.4.0/lifecycle-common-2.4.0.pom",
+      "sha256": "f64ba2375294104dd5e8fae7345a61d5219e0a94cc22f26cef6630bb0a904236",
+      "bytes": 1984
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-common/2.4.1/lifecycle-common-2.4.1.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-common/2.4.1/lifecycle-common-2.4.1.pom",
+      "sha256": "67296b0798c42736c2016776096f6ec2335f9f06c224fd7fc5e2aa8a971cbaf4",
+      "bytes": 1984
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-common/2.5.1/lifecycle-common-2.5.1.jar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-common/2.5.1/lifecycle-common-2.5.1.jar",
+      "sha256": "20ad1520f625cf455e6afd7290988306d3a9886efa993e0860fbabf4bb3f7bda",
+      "bytes": 24230
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-common/2.5.1/lifecycle-common-2.5.1.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-common/2.5.1/lifecycle-common-2.5.1.pom",
+      "sha256": "82d2192e3de9fdd7f45b9088e27315e7dbec02d094632faa6a39251690d28cc0",
+      "bytes": 1983
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-livedata-core/2.0.0/lifecycle-livedata-core-2.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-livedata-core/2.0.0/lifecycle-livedata-core-2.0.0.pom",
+      "sha256": "650fda1a232f5669742140571570ccad2f47a71225ab0f02179bc8d144b982c8",
+      "bytes": 1773
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-livedata-core/2.3.1/lifecycle-livedata-core-2.3.1.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-livedata-core/2.3.1/lifecycle-livedata-core-2.3.1.pom",
+      "sha256": "fb996222e3de47f1bdeb8b36590b8c11898a4f72f9138da187365d3103a143fb",
+      "bytes": 2162
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-livedata-core/2.5.1/lifecycle-livedata-core-2.5.1.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-livedata-core/2.5.1/lifecycle-livedata-core-2.5.1.aar",
+      "sha256": "ee792103ca248bfaf150c45a93871e4cf7e8cebab990e0f62f7de5d4ff2f209f",
+      "bytes": 10078
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-livedata-core/2.5.1/lifecycle-livedata-core-2.5.1.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-livedata-core/2.5.1/lifecycle-livedata-core-2.5.1.pom",
+      "sha256": "642f0e95da3f386bb1d136ef8a11481dccd384c28a093d94b5c7bcdaa2efa5b3",
+      "bytes": 2164
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-livedata/2.0.0/lifecycle-livedata-2.0.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-livedata/2.0.0/lifecycle-livedata-2.0.0.aar",
+      "sha256": "c82609ced8c498f0a701a30fb6771bb7480860daee84d82e0a81ee86edf7ba39",
+      "bytes": 9431
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-livedata/2.0.0/lifecycle-livedata-2.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-livedata/2.0.0/lifecycle-livedata-2.0.0.pom",
+      "sha256": "a84842ffc0f14e518db75c05cc112680a8a4a164fa78395be32d88304a439423",
+      "bytes": 1788
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-process/2.4.1/lifecycle-process-2.4.1.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-process/2.4.1/lifecycle-process-2.4.1.aar",
+      "sha256": "db649b3efa24e31052145310b002db91da346b3f89c093ec38c3046db45e794e",
+      "bytes": 9331
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-process/2.4.1/lifecycle-process-2.4.1.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-process/2.4.1/lifecycle-process-2.4.1.pom",
+      "sha256": "da7e2e10cae7d7625a0ae454017a125749e1791a139c2d777de91add89410af5",
+      "bytes": 2172
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-runtime/2.0.0/lifecycle-runtime-2.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-runtime/2.0.0/lifecycle-runtime-2.0.0.pom",
+      "sha256": "a92a46fa7aec8ac326a5d578734a2d5b63206976996b9e06cae171b35b0ab6de",
+      "bytes": 1731
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-runtime/2.1.0/lifecycle-runtime-2.1.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-runtime/2.1.0/lifecycle-runtime-2.1.0.pom",
+      "sha256": "af8dcf02db2d79bcd4b53d6be8dbf37d79a32b38a1dfcaebbbd8766e0d959fcb",
+      "bytes": 1731
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-runtime/2.3.1/lifecycle-runtime-2.3.1.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-runtime/2.3.1/lifecycle-runtime-2.3.1.pom",
+      "sha256": "b4442a84fc397edb2e908a1fdf713c6ae7d3a87641a09ee13d10ec8ee10b331f",
+      "bytes": 2326
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-runtime/2.4.1/lifecycle-runtime-2.4.1.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-runtime/2.4.1/lifecycle-runtime-2.4.1.pom",
+      "sha256": "47fbd76cd437ee9598dadaebb51a1062510c4cc984dffa86c19a020afe68561f",
+      "bytes": 2329
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-runtime/2.5.1/lifecycle-runtime-2.5.1.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-runtime/2.5.1/lifecycle-runtime-2.5.1.aar",
+      "sha256": "33b0d73dc2f028fceb3599bacabe563c3db6d26f3513d889595863536a4ac8c0",
+      "bytes": 12288
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-runtime/2.5.1/lifecycle-runtime-2.5.1.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-runtime/2.5.1/lifecycle-runtime-2.5.1.pom",
+      "sha256": "6a390ba7ac02c9004a0a454efc27f925936cc26527e82bc62caafb4fcb0f0db2",
+      "bytes": 2328
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-viewmodel-savedstate/2.3.1/lifecycle-viewmodel-savedstate-2.3.1.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-viewmodel-savedstate/2.3.1/lifecycle-viewmodel-savedstate-2.3.1.pom",
+      "sha256": "215e40ee84fdafb29ef258977b196bae8fa5a6c7a3a3411427c787b271e4f45c",
+      "bytes": 2419
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-viewmodel-savedstate/2.5.1/lifecycle-viewmodel-savedstate-2.5.1.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-viewmodel-savedstate/2.5.1/lifecycle-viewmodel-savedstate-2.5.1.aar",
+      "sha256": "8481141f97f0e6213dd33fcc89a784c4bd11a6ff7d4779a1cf6a0e9fbdbf24e0",
+      "bytes": 34933
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-viewmodel-savedstate/2.5.1/lifecycle-viewmodel-savedstate-2.5.1.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-viewmodel-savedstate/2.5.1/lifecycle-viewmodel-savedstate-2.5.1.pom",
+      "sha256": "3d77fa3b0e026d86b723bbc134742e232e8f99ce18a11df5b789562e9a6c0a6f",
+      "bytes": 3007
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-viewmodel/2.0.0/lifecycle-viewmodel-2.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-viewmodel/2.0.0/lifecycle-viewmodel-2.0.0.pom",
+      "sha256": "60b758fd1c664089f82d1c018ed4ff7955c14a2b1620af7aa106591f733e0827",
+      "bytes": 1368
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-viewmodel/2.1.0/lifecycle-viewmodel-2.1.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-viewmodel/2.1.0/lifecycle-viewmodel-2.1.0.pom",
+      "sha256": "29aa72e339c3e227e74c973a4c85c7b79c926f0d37b61ed94f4d99a137c9a4b4",
+      "bytes": 1368
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-viewmodel/2.3.1/lifecycle-viewmodel-2.3.1.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-viewmodel/2.3.1/lifecycle-viewmodel-2.3.1.pom",
+      "sha256": "23f45ead0b9a038382d9c3aaf9cb51f50bebccb638ab83df9d842a3bf08c411a",
+      "bytes": 1757
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-viewmodel/2.5.1/lifecycle-viewmodel-2.5.1.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-viewmodel/2.5.1/lifecycle-viewmodel-2.5.1.aar",
+      "sha256": "14a27d5fb8a1436b1b7dec18bebaa66c830cdbbc8e28a81ce5f85b7c33b3ae9d",
+      "bytes": 34830
+    },
+    {
+      "path": "cache/androidx/lifecycle/lifecycle-viewmodel/2.5.1/lifecycle-viewmodel-2.5.1.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-viewmodel/2.5.1/lifecycle-viewmodel-2.5.1.pom",
+      "sha256": "93e5cfccbc9fd2f8a1092ec06b0757bd834e63dcd2a8001b594239ab1e4a6de1",
+      "bytes": 2216
+    },
+    {
+      "path": "cache/androidx/loader/loader/1.0.0/loader-1.0.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/loader/loader/1.0.0/loader-1.0.0.aar",
+      "sha256": "11f735cb3b55c458d470bed9e25254375b518b4b1bad6926783a7026db0f5025",
+      "bytes": 33445
+    },
+    {
+      "path": "cache/androidx/loader/loader/1.0.0/loader-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/loader/loader/1.0.0/loader-1.0.0.pom",
+      "sha256": "c978d550808b47434aa49a63164110a50b55b0bcc6160a93a2e37d5110df8c5e",
+      "bytes": 2207
+    },
+    {
+      "path": "cache/androidx/localbroadcastmanager/localbroadcastmanager/1.0.0/localbroadcastmanager-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/localbroadcastmanager/localbroadcastmanager/1.0.0/localbroadcastmanager-1.0.0.pom",
+      "sha256": "a000041f5a1f79283c5175e1bb60cf3683780f401c6a9d34fbe9751253fa6ff9",
+      "bytes": 1636
+    },
+    {
+      "path": "cache/androidx/print/print/1.0.0/print-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/print/print/1.0.0/print-1.0.0.pom",
+      "sha256": "62482c0594841bee24bb996abb6cb7b320a6a3b77dca9f0a0ba4fe3be5530aa7",
+      "bytes": 1586
+    },
+    {
+      "path": "cache/androidx/resourceinspection/resourceinspection-annotation/1.0.1/resourceinspection-annotation-1.0.1.jar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/resourceinspection/resourceinspection-annotation/1.0.1/resourceinspection-annotation-1.0.1.jar",
+      "sha256": "8cff870ec6fb31db48a52f4a792335b4bf8de07e03bd37823181526433ccd5cb",
+      "bytes": 2336
+    },
+    {
+      "path": "cache/androidx/resourceinspection/resourceinspection-annotation/1.0.1/resourceinspection-annotation-1.0.1.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/resourceinspection/resourceinspection-annotation/1.0.1/resourceinspection-annotation-1.0.1.pom",
+      "sha256": "b8eb4938ed95d7fcdaa2712ebca363e46a0f9228b8be7f23154def56846815dc",
+      "bytes": 1808
+    },
+    {
+      "path": "cache/androidx/savedstate/savedstate/1.0.0/savedstate-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/savedstate/savedstate/1.0.0/savedstate-1.0.0.pom",
+      "sha256": "844d7d22fcea798c78bf5559229daf88ec9cad8136f5eea0a29aa76b3f8fde7c",
+      "bytes": 2072
+    },
+    {
+      "path": "cache/androidx/savedstate/savedstate/1.1.0/savedstate-1.1.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/savedstate/savedstate/1.1.0/savedstate-1.1.0.pom",
+      "sha256": "49784b75cb499bb9f8137d823a872f0c6da5ca6dba7c9acf2de3a683cb7db6dc",
+      "bytes": 2171
+    },
+    {
+      "path": "cache/androidx/savedstate/savedstate/1.2.0/savedstate-1.2.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/savedstate/savedstate/1.2.0/savedstate-1.2.0.aar",
+      "sha256": "2de528d6898e95ef020d22d9ffdf9d1f77cbdd93f92d39dfaa5d5c43b0c311c8",
+      "bytes": 19326
+    },
+    {
+      "path": "cache/androidx/savedstate/savedstate/1.2.0/savedstate-1.2.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/savedstate/savedstate/1.2.0/savedstate-1.2.0.pom",
+      "sha256": "3e11c019ffe6053b3b9879a23107d6d6f1059e92339ba524e19674720fa7ddbe",
+      "bytes": 2292
+    },
+    {
+      "path": "cache/androidx/slidingpanelayout/slidingpanelayout/1.0.0/slidingpanelayout-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/slidingpanelayout/slidingpanelayout/1.0.0/slidingpanelayout-1.0.0.pom",
+      "sha256": "40e90f96838c2a8156ab51b181400767049f387cec8c695e412d3d9205b0745b",
+      "bytes": 2022
+    },
+    {
+      "path": "cache/androidx/startup/startup-runtime/1.0.0/startup-runtime-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/startup/startup-runtime/1.0.0/startup-runtime-1.0.0.pom",
+      "sha256": "190b654251f110452f67f6a13d766e8fee0811f07e6f0b0f77d58906226acba8",
+      "bytes": 1948
+    },
+    {
+      "path": "cache/androidx/startup/startup-runtime/1.1.1/startup-runtime-1.1.1.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/startup/startup-runtime/1.1.1/startup-runtime-1.1.1.aar",
+      "sha256": "e0a6329a371262fe4c450372b70fdaf33b769ef6917094723787cfce896b1dd3",
+      "bytes": 19371
+    },
+    {
+      "path": "cache/androidx/startup/startup-runtime/1.1.1/startup-runtime-1.1.1.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/startup/startup-runtime/1.1.1/startup-runtime-1.1.1.pom",
+      "sha256": "f4114b5c6859bb1bc3caf281cb6d6f25998fa7f7292c64ceaea74a93210e746b",
+      "bytes": 1949
+    },
+    {
+      "path": "cache/androidx/swiperefreshlayout/swiperefreshlayout/1.0.0/swiperefreshlayout-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/swiperefreshlayout/swiperefreshlayout/1.0.0/swiperefreshlayout-1.0.0.pom",
+      "sha256": "8fe4b5db332af33cde899ba571ee866ad977be38114d3ab600edaca454ea8299",
+      "bytes": 2020
+    },
+    {
+      "path": "cache/androidx/tracing/tracing/1.0.0/tracing-1.0.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/tracing/tracing/1.0.0/tracing-1.0.0.aar",
+      "sha256": "07b8b6139665b884a162eccf97891ca50f7f56831233bf25168ae04f7b568612",
+      "bytes": 4444
+    },
+    {
+      "path": "cache/androidx/tracing/tracing/1.0.0/tracing-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/tracing/tracing/1.0.0/tracing-1.0.0.pom",
+      "sha256": "cd0299a90d4720d78f1cfb5ff7505f4dbc1a70d05fe23fd9f4d4b77ea59ca05e",
+      "bytes": 1717
+    },
+    {
+      "path": "cache/androidx/vectordrawable/vectordrawable-animated/1.1.0/vectordrawable-animated-1.1.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/vectordrawable/vectordrawable-animated/1.1.0/vectordrawable-animated-1.1.0.aar",
+      "sha256": "76da2c502371d9c38054df5e2b248d00da87809ed058f3363eae87ce5e2403f8",
+      "bytes": 34496
+    },
+    {
+      "path": "cache/androidx/vectordrawable/vectordrawable-animated/1.1.0/vectordrawable-animated-1.1.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/vectordrawable/vectordrawable-animated/1.1.0/vectordrawable-animated-1.1.0.pom",
+      "sha256": "276a20116b705fb75b9003ee9496c56f6fd3b32375fb232472811eba60a040bd",
+      "bytes": 1798
+    },
+    {
+      "path": "cache/androidx/vectordrawable/vectordrawable/1.1.0/vectordrawable-1.1.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/vectordrawable/vectordrawable/1.1.0/vectordrawable-1.1.0.aar",
+      "sha256": "46fd633ac01b49b7fcabc263bf098c5a8b9e9a69774d234edcca04fb02df8e26",
+      "bytes": 33236
+    },
+    {
+      "path": "cache/androidx/vectordrawable/vectordrawable/1.1.0/vectordrawable-1.1.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/vectordrawable/vectordrawable/1.1.0/vectordrawable-1.1.0.pom",
+      "sha256": "5b0e2d5b2179e54804785cbc21ce5f473b5e1ddd55a57da482e94dcd39492bb2",
+      "bytes": 1726
+    },
+    {
+      "path": "cache/androidx/versionedparcelable/versionedparcelable/1.0.0/versionedparcelable-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/versionedparcelable/versionedparcelable/1.0.0/versionedparcelable-1.0.0.pom",
+      "sha256": "47ee7c5543239a651f8fb81310cadeeaab8e38a2d844d7bb92dd086e4ffbb320",
+      "bytes": 1655
+    },
+    {
+      "path": "cache/androidx/versionedparcelable/versionedparcelable/1.1.0/versionedparcelable-1.1.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/versionedparcelable/versionedparcelable/1.1.0/versionedparcelable-1.1.0.pom",
+      "sha256": "c729c7be0cc06323bda829d460666e79dbd43b799a21089a44bd3b293dc253b5",
+      "bytes": 1643
+    },
+    {
+      "path": "cache/androidx/versionedparcelable/versionedparcelable/1.1.1/versionedparcelable-1.1.1.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/versionedparcelable/versionedparcelable/1.1.1/versionedparcelable-1.1.1.aar",
+      "sha256": "57e8d93260d18d5b9007c9eed3c64ad159de90c8609ebfc74a347cbd514535a4",
+      "bytes": 31061
+    },
+    {
+      "path": "cache/androidx/versionedparcelable/versionedparcelable/1.1.1/versionedparcelable-1.1.1.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/versionedparcelable/versionedparcelable/1.1.1/versionedparcelable-1.1.1.pom",
+      "sha256": "5f51e65873ca612de3838fa90d2ee95b8d040efd31b9c390a19bf94d615cdb2f",
+      "bytes": 1643
+    },
+    {
+      "path": "cache/androidx/viewpager/viewpager/1.0.0/viewpager-1.0.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/viewpager/viewpager/1.0.0/viewpager-1.0.0.aar",
+      "sha256": "147af4e14a1984010d8f155e5e19d781f03c1d70dfed02a8e0d18428b8fc8682",
+      "bytes": 53513
+    },
+    {
+      "path": "cache/androidx/viewpager/viewpager/1.0.0/viewpager-1.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/androidx/viewpager/viewpager/1.0.0/viewpager-1.0.0.pom",
+      "sha256": "1f72f836339d03c6eb013f65075e76ca87075a577578eb4f95f74a3a5d253128",
+      "bytes": 1997
+    },
+    {
+      "path": "cache/com/google/android/datatransport/transport-api/2.2.1/transport-api-2.2.1.aar",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/android/datatransport/transport-api/2.2.1/transport-api-2.2.1.aar",
+      "sha256": "e62f73ba1c7f5d15f5d86d8e9a298c42ccd0648e7ce60b9e312f2ecd123b5ed0",
+      "bytes": 4879
+    },
+    {
+      "path": "cache/com/google/android/datatransport/transport-api/2.2.1/transport-api-2.2.1.pom",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/android/datatransport/transport-api/2.2.1/transport-api-2.2.1.pom",
+      "sha256": "8118f805b855f18f1d12e5af59e914a7f6206f71bb1d1192a8ab9a8db4107afe",
+      "bytes": 932
+    },
+    {
+      "path": "cache/com/google/android/datatransport/transport-backend-cct/2.3.3/transport-backend-cct-2.3.3.aar",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/android/datatransport/transport-backend-cct/2.3.3/transport-backend-cct-2.3.3.aar",
+      "sha256": "b22a14d560a590dc875e902424b29a13a02d1faf297b7c39a9007967ffadccbd",
+      "bytes": 35697
+    },
+    {
+      "path": "cache/com/google/android/datatransport/transport-backend-cct/2.3.3/transport-backend-cct-2.3.3.pom",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/android/datatransport/transport-backend-cct/2.3.3/transport-backend-cct-2.3.3.pom",
+      "sha256": "ab4e3c8df8bb695d6466df399f4c2e0da977c04d2fdea8a34ee51281683175b0",
+      "bytes": 1825
+    },
+    {
+      "path": "cache/com/google/android/datatransport/transport-runtime/2.2.5/transport-runtime-2.2.5.pom",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/android/datatransport/transport-runtime/2.2.5/transport-runtime-2.2.5.pom",
+      "sha256": "3a86c974e79d79a55eeaf9aa65ac30fa63768a4efaceb17446f9e68aed59a590",
+      "bytes": 1357
+    },
+    {
+      "path": "cache/com/google/android/datatransport/transport-runtime/2.2.6/transport-runtime-2.2.6.aar",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/android/datatransport/transport-runtime/2.2.6/transport-runtime-2.2.6.aar",
+      "sha256": "d83ad23c134429691161c92476a3c83df236cd1f8badbfd4f00723b4eccd741c",
+      "bytes": 97859
+    },
+    {
+      "path": "cache/com/google/android/datatransport/transport-runtime/2.2.6/transport-runtime-2.2.6.pom",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/android/datatransport/transport-runtime/2.2.6/transport-runtime-2.2.6.pom",
+      "sha256": "aff04e2de298277827d2031cc265b5a28a030e54210a9ba3a018aa0859d29589",
+      "bytes": 1357
+    },
+    {
+      "path": "cache/com/google/android/gms/play-services-base/18.1.0/play-services-base-18.1.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/android/gms/play-services-base/18.1.0/play-services-base-18.1.0.pom",
+      "sha256": "30df78ba3ead133c2b36784b425a9eeee7f02531907e8aaee4e8922354f732a7",
+      "bytes": 1767
+    },
+    {
+      "path": "cache/com/google/android/gms/play-services-base/18.5.0/play-services-base-18.5.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/android/gms/play-services-base/18.5.0/play-services-base-18.5.0.aar",
+      "sha256": "59a5c0c2da12311d75d965ce1f419498536b1a167fb28ff7dfc2dfd9cefa4157",
+      "bytes": 439602
+    },
+    {
+      "path": "cache/com/google/android/gms/play-services-base/18.5.0/play-services-base-18.5.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/android/gms/play-services-base/18.5.0/play-services-base-18.5.0.pom",
+      "sha256": "2570b515c2717af386c890e97f644782e3f86da7b677a4ff1036147e7ea622a4",
+      "bytes": 1767
+    },
+    {
+      "path": "cache/com/google/android/gms/play-services-basement/18.1.0/play-services-basement-18.1.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/android/gms/play-services-basement/18.1.0/play-services-basement-18.1.0.pom",
+      "sha256": "c633e42daf94df10b7e1d75cd6efb8247c924b8a35c385f5cd1f3cbaeee1bf7d",
+      "bytes": 1336
+    },
+    {
+      "path": "cache/com/google/android/gms/play-services-basement/18.4.0/play-services-basement-18.4.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/android/gms/play-services-basement/18.4.0/play-services-basement-18.4.0.aar",
+      "sha256": "ce5c936fd66814b3602f5c6a5e929911ff973d4b05f6de9996da596bef97cad2",
+      "bytes": 286283
+    },
+    {
+      "path": "cache/com/google/android/gms/play-services-basement/18.4.0/play-services-basement-18.4.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/android/gms/play-services-basement/18.4.0/play-services-basement-18.4.0.pom",
+      "sha256": "05ca7c0ace0d6260931f97ed32c60ce598071ff560d3fa44f49e6f0695d2b687",
+      "bytes": 1336
+    },
+    {
+      "path": "cache/com/google/android/gms/play-services-mlkit-text-recognition-chinese/16.0.1/play-services-mlkit-text-recognition-chinese-16.0.1.aar",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/android/gms/play-services-mlkit-text-recognition-chinese/16.0.1/play-services-mlkit-text-recognition-chinese-16.0.1.aar",
+      "sha256": "0a3edb3967097536f72ab7bd68496c624a0752ceff5c31a4bc88d20c6f668e06",
+      "bytes": 78105
+    },
+    {
+      "path": "cache/com/google/android/gms/play-services-mlkit-text-recognition-chinese/16.0.1/play-services-mlkit-text-recognition-chinese-16.0.1.pom",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/android/gms/play-services-mlkit-text-recognition-chinese/16.0.1/play-services-mlkit-text-recognition-chinese-16.0.1.pom",
+      "sha256": "52630cd1de3f132548d7f25c173acafac8250c6dca1f9255a4e1e618ed93d0c0",
+      "bytes": 1639
+    },
+    {
+      "path": "cache/com/google/android/gms/play-services-mlkit-text-recognition-common/19.1.0/play-services-mlkit-text-recognition-common-19.1.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/android/gms/play-services-mlkit-text-recognition-common/19.1.0/play-services-mlkit-text-recognition-common-19.1.0.aar",
+      "sha256": "3be02b3c3c829476100f01d0ab79f0b4a923da23909d3ac63e486d1a63381c58",
+      "bytes": 437936
+    },
+    {
+      "path": "cache/com/google/android/gms/play-services-mlkit-text-recognition-common/19.1.0/play-services-mlkit-text-recognition-common-19.1.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/android/gms/play-services-mlkit-text-recognition-common/19.1.0/play-services-mlkit-text-recognition-common-19.1.0.pom",
+      "sha256": "a2d1ec395cd22dec73b0cfcf1bc384d8c77c58f4a8b61c78dfbf6e541d9cc365",
+      "bytes": 3560
+    },
+    {
+      "path": "cache/com/google/android/gms/play-services-tasks/18.0.2/play-services-tasks-18.0.2.pom",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/android/gms/play-services-tasks/18.0.2/play-services-tasks-18.0.2.pom",
+      "sha256": "e07cdb8e9e63f3e94596bcd8984c7379c47d9f289ecb9a5e35fcb9f2f573ba9f",
+      "bytes": 952
+    },
+    {
+      "path": "cache/com/google/android/gms/play-services-tasks/18.2.0/play-services-tasks-18.2.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/android/gms/play-services-tasks/18.2.0/play-services-tasks-18.2.0.aar",
+      "sha256": "7f2aaa8f502068eaf54356ca92aec04271d6e7c416c52c45c0d23440fcbd1654",
+      "bytes": 80343
+    },
+    {
+      "path": "cache/com/google/android/gms/play-services-tasks/18.2.0/play-services-tasks-18.2.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/android/gms/play-services-tasks/18.2.0/play-services-tasks-18.2.0.pom",
+      "sha256": "6b99c48a895d155e58abcee66cc22146db83abd5d84caf6c8f7a2aea9b1bcd21",
+      "bytes": 952
+    },
+    {
+      "path": "cache/com/google/android/odml/image/1.0.0-beta1/image-1.0.0-beta1.aar",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/android/odml/image/1.0.0-beta1/image-1.0.0-beta1.aar",
+      "sha256": "2e71aa31f83a9415277f119de67195726f07d1760e9542c111778c320e3aa1f2",
+      "bytes": 23893
+    },
+    {
+      "path": "cache/com/google/android/odml/image/1.0.0-beta1/image-1.0.0-beta1.pom",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/android/odml/image/1.0.0-beta1/image-1.0.0-beta1.pom",
+      "sha256": "795f4793c375eedf4332a0381082981a5ce70b7a0a776221ca24ad9d40cbea1c",
+      "bytes": 674
+    },
+    {
+      "path": "cache/com/google/firebase/firebase-annotations/16.0.0/firebase-annotations-16.0.0.jar",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/firebase/firebase-annotations/16.0.0/firebase-annotations-16.0.0.jar",
+      "sha256": "8830f2e8a5e434cbc5e4bd18133073b6e8518a8ce8ec2ce6f3b273c91d9664c2",
+      "bytes": 921
+    },
+    {
+      "path": "cache/com/google/firebase/firebase-annotations/16.0.0/firebase-annotations-16.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/firebase/firebase-annotations/16.0.0/firebase-annotations-16.0.0.pom",
+      "sha256": "82c6d040edcb3c158b5b9865601d2bd742abcbd97cbd98903bde059da8edd087",
+      "bytes": 694
+    },
+    {
+      "path": "cache/com/google/firebase/firebase-components/16.1.0/firebase-components-16.1.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/firebase/firebase-components/16.1.0/firebase-components-16.1.0.aar",
+      "sha256": "82e91aa5ed186eedaf1f2210f5d241ba6e4456cf0c32949d5cdbe152b0e2e88b",
+      "bytes": 30176
+    },
+    {
+      "path": "cache/com/google/firebase/firebase-components/16.1.0/firebase-components-16.1.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/firebase/firebase-components/16.1.0/firebase-components-16.1.0.pom",
+      "sha256": "8320c67176d416edcf58b65b2ef491b42faa1360f3cd7bf3d8c2eea4298ae70e",
+      "bytes": 1148
+    },
+    {
+      "path": "cache/com/google/firebase/firebase-encoders-json/17.1.0/firebase-encoders-json-17.1.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/firebase/firebase-encoders-json/17.1.0/firebase-encoders-json-17.1.0.aar",
+      "sha256": "8295c755bcadc87a2aaee5b9e568f27fd138fd45ff1159a8ee747cf4c3a38d85",
+      "bytes": 9451
+    },
+    {
+      "path": "cache/com/google/firebase/firebase-encoders-json/17.1.0/firebase-encoders-json-17.1.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/firebase/firebase-encoders-json/17.1.0/firebase-encoders-json-17.1.0.pom",
+      "sha256": "c823cbed7a0e75bf30fedbba42ff1c0c8752e3dc16edccf7d0f2e5d6cb69c7a8",
+      "bytes": 1151
+    },
+    {
+      "path": "cache/com/google/firebase/firebase-encoders/16.1.0/firebase-encoders-16.1.0.jar",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/firebase/firebase-encoders/16.1.0/firebase-encoders-16.1.0.jar",
+      "sha256": "8f89a74298bbccc2c543385208a2f0c67f603ce67e6ec21cc772e98e688f7cf5",
+      "bytes": 17847
+    },
+    {
+      "path": "cache/com/google/firebase/firebase-encoders/16.1.0/firebase-encoders-16.1.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/firebase/firebase-encoders/16.1.0/firebase-encoders-16.1.0.pom",
+      "sha256": "687bd5744fdc54fce404a4403ebbdb847fbf651b9b87293a4a56fc4d8fc68e1c",
+      "bytes": 928
+    },
+    {
+      "path": "cache/com/google/guava/guava-parent/26.0-android/guava-parent-26.0-android.pom",
+      "url": "https://repo.maven.apache.org/maven2/com/google/guava/guava-parent/26.0-android/guava-parent-26.0-android.pom",
+      "sha256": "f8698ab46ca996ce889c1afc8ca4f25eb8ac6b034dc898d4583742360016cc04",
+      "bytes": 10180
+    },
+    {
+      "path": "cache/com/google/guava/listenablefuture/1.0/listenablefuture-1.0.jar",
+      "url": "https://repo.maven.apache.org/maven2/com/google/guava/listenablefuture/1.0/listenablefuture-1.0.jar",
+      "sha256": "e4ad7607e5c0477c6f890ef26a49cb8d1bb4dffb650bab4502afee64644e3069",
+      "bytes": 3149
+    },
+    {
+      "path": "cache/com/google/guava/listenablefuture/1.0/listenablefuture-1.0.pom",
+      "url": "https://repo.maven.apache.org/maven2/com/google/guava/listenablefuture/1.0/listenablefuture-1.0.pom",
+      "sha256": "53873caf26bc1ed8a567ea6c939ab2aaa3f47a5e32d5cade95ddf5080d23238a",
+      "bytes": 2226
+    },
+    {
+      "path": "cache/com/google/mlkit/common/18.11.0/common-18.11.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/mlkit/common/18.11.0/common-18.11.0.aar",
+      "sha256": "66408a08dbb2465687ff5dd0c8f6410b56549ce3ecf449d9096f3712282131d0",
+      "bytes": 434066
+    },
+    {
+      "path": "cache/com/google/mlkit/common/18.11.0/common-18.11.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/mlkit/common/18.11.0/common-18.11.0.pom",
+      "sha256": "e50ec6f1d7c77025cdc4853b835ca4e8b1394966c5029543a699baf252aea057",
+      "bytes": 3051
+    },
+    {
+      "path": "cache/com/google/mlkit/common/18.6.0/common-18.6.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/mlkit/common/18.6.0/common-18.6.0.pom",
+      "sha256": "68cb5b15d42991c90e815d83155e92038dd719fb215214a3c0e0f9a2dcde4731",
+      "bytes": 2847
+    },
+    {
+      "path": "cache/com/google/mlkit/text-recognition-bundled-common/17.0.0/text-recognition-bundled-common-17.0.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/mlkit/text-recognition-bundled-common/17.0.0/text-recognition-bundled-common-17.0.0.aar",
+      "sha256": "fb1d4e26d69125659b6f5a94f03cce145544b0116807d04333335a9775636e05",
+      "bytes": 17960748
+    },
+    {
+      "path": "cache/com/google/mlkit/text-recognition-bundled-common/17.0.0/text-recognition-bundled-common-17.0.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/mlkit/text-recognition-bundled-common/17.0.0/text-recognition-bundled-common-17.0.0.pom",
+      "sha256": "8472b8352251f8625283935821ef2112e4b345d4a7249b57070798efbca598e9",
+      "bytes": 1789
+    },
+    {
+      "path": "cache/com/google/mlkit/text-recognition-chinese/16.0.1/text-recognition-chinese-16.0.1.aar",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/mlkit/text-recognition-chinese/16.0.1/text-recognition-chinese-16.0.1.aar",
+      "sha256": "cb81f8036a6410e036cff88350ee8548e5258ff6f9e2ffbc7455defa7f672dbe",
+      "bytes": 2036186
+    },
+    {
+      "path": "cache/com/google/mlkit/text-recognition-chinese/16.0.1/text-recognition-chinese-16.0.1.pom",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/mlkit/text-recognition-chinese/16.0.1/text-recognition-chinese-16.0.1.pom",
+      "sha256": "8b1d0ef4c9a114e8a2913f0acfc0ded142a3edcbf95a6b4e5d347ceb1698936a",
+      "bytes": 2060
+    },
+    {
+      "path": "cache/com/google/mlkit/vision-common/17.3.0/vision-common-17.3.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/mlkit/vision-common/17.3.0/vision-common-17.3.0.aar",
+      "sha256": "c0085ca5fba00f11529c0a83b12851ea6c599bbcc8affd927e914b29a743459f",
+      "bytes": 269178
+    },
+    {
+      "path": "cache/com/google/mlkit/vision-common/17.3.0/vision-common-17.3.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/mlkit/vision-common/17.3.0/vision-common-17.3.0.pom",
+      "sha256": "4e649af84e58d4c824eeabc8522e142fb30be41524b4001b699f3e95bdd366ec",
+      "bytes": 3288
+    },
+    {
+      "path": "cache/com/google/mlkit/vision-interfaces/16.3.0/vision-interfaces-16.3.0.aar",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/mlkit/vision-interfaces/16.3.0/vision-interfaces-16.3.0.aar",
+      "sha256": "8f0192a26d01b728a01a15a620d829fff7095822822694438a93127c04cb16fb",
+      "bytes": 73882
+    },
+    {
+      "path": "cache/com/google/mlkit/vision-interfaces/16.3.0/vision-interfaces-16.3.0.pom",
+      "url": "https://dl.google.com/dl/android/maven2/com/google/mlkit/vision-interfaces/16.3.0/vision-interfaces-16.3.0.pom",
+      "sha256": "3422392e93c7f29c30149cc37e39f535ad32705fa6e015d8cae8a8f763e73ff6",
+      "bytes": 1138
+    },
+    {
+      "path": "cache/javax/inject/javax.inject/1/javax.inject-1.jar",
+      "url": "https://repo.maven.apache.org/maven2/javax/inject/javax.inject/1/javax.inject-1.jar",
+      "sha256": "91c77044a50c481636c32d916fd89c9118a72195390452c81065080f957de7ff",
+      "bytes": 2497
+    },
+    {
+      "path": "cache/javax/inject/javax.inject/1/javax.inject-1.pom",
+      "url": "https://repo.maven.apache.org/maven2/javax/inject/javax.inject/1/javax.inject-1.pom",
+      "sha256": "943e12b100627804638fa285805a0ab788a680266531e650921ebfe4621a8bfa",
+      "bytes": 612
+    },
+    {
+      "path": "cache/org/jetbrains/annotations/13.0/annotations-13.0.jar",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/annotations/13.0/annotations-13.0.jar",
+      "sha256": "ace2a10dc8e2d5fd34925ecac03e4988b2c0f851650c94b8cef49ba1bd111478",
+      "bytes": 17536
+    },
+    {
+      "path": "cache/org/jetbrains/annotations/13.0/annotations-13.0.pom",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/annotations/13.0/annotations-13.0.pom",
+      "sha256": "965aeb2bedff369819bdde1bf7a0b3b89b8247dd69c88b86375d76163bb8c397",
+      "bytes": 4930
+    },
+    {
+      "path": "cache/org/jetbrains/kotlin/kotlin-stdlib-common/1.3.41/kotlin-stdlib-common-1.3.41.pom",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-common/1.3.41/kotlin-stdlib-common-1.3.41.pom",
+      "sha256": "d2e537cd1f7705276242d8cc903a0286b6dc86b41b6e728e967ef719022f2e15",
+      "bytes": 1607
+    },
+    {
+      "path": "cache/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.0/kotlin-stdlib-common-1.6.0.pom",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.0/kotlin-stdlib-common-1.6.0.pom",
+      "sha256": "899e97c2028b5f7a2bdaf6751fa2a01b687e3ee2a781767c8a227cbffb6c0184",
+      "bytes": 1160
+    },
+    {
+      "path": "cache/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.20/kotlin-stdlib-common-1.6.20.pom",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.20/kotlin-stdlib-common-1.6.20.pom",
+      "sha256": "3e04cc9351d5cec42a45c060f8733f6e94ebc7e3591310a518e06e88507899c8",
+      "bytes": 1162
+    },
+    {
+      "path": "cache/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.21/kotlin-stdlib-common-1.6.21.pom",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.21/kotlin-stdlib-common-1.6.21.pom",
+      "sha256": "5bc156ee73fd3c2dac8a5ec548d581b633333547c2febed9cf6547fff1526ba2",
+      "bytes": 1162
+    },
+    {
+      "path": "cache/org/jetbrains/kotlin/kotlin-stdlib-common/1.7.10/kotlin-stdlib-common-1.7.10.jar",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-common/1.7.10/kotlin-stdlib-common-1.7.10.jar",
+      "sha256": "19f102efe9629f8eabc63853ad15c533e47c47f91fca09285c5bde86e59f91d4",
+      "bytes": 198936
+    },
+    {
+      "path": "cache/org/jetbrains/kotlin/kotlin-stdlib-common/1.7.10/kotlin-stdlib-common-1.7.10.pom",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-common/1.7.10/kotlin-stdlib-common-1.7.10.pom",
+      "sha256": "1011c63b88ee94cdff5d596937307559bc55037b733cc00ce63cda3cfae0a8eb",
+      "bytes": 1162
+    },
+    {
+      "path": "cache/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.0/kotlin-stdlib-jdk7-1.6.0.jar",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.0/kotlin-stdlib-jdk7-1.6.0.jar",
+      "sha256": "870d35fd266b2daf64c1080fe51824d3c368f7995384a8d7c5fc2fdc40eb7b3a",
+      "bytes": 22357
+    },
+    {
+      "path": "cache/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.0/kotlin-stdlib-jdk7-1.6.0.pom",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.0/kotlin-stdlib-jdk7-1.6.0.pom",
+      "sha256": "ed56079f29396d7f26911fb53ca28b88e98a5c42b19bbe7bb23a92e731cf65cb",
+      "bytes": 1386
+    },
+    {
+      "path": "cache/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.0/kotlin-stdlib-jdk8-1.6.0.jar",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.0/kotlin-stdlib-jdk8-1.6.0.jar",
+      "sha256": "ab0547c495953214a5f2b28150014f4e02133678d52b77d76375ea235e443dbd",
+      "bytes": 16201
+    },
+    {
+      "path": "cache/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.0/kotlin-stdlib-jdk8-1.6.0.pom",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.0/kotlin-stdlib-jdk8-1.6.0.pom",
+      "sha256": "db9ece4af4ee7008a18a66580398224200af7f6dfeab46761ec39e756cb9b9e7",
+      "bytes": 1577
+    },
+    {
+      "path": "cache/org/jetbrains/kotlin/kotlin-stdlib/1.3.41/kotlin-stdlib-1.3.41.pom",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/1.3.41/kotlin-stdlib-1.3.41.pom",
+      "sha256": "785b5b66f1146317d5ed5b18c8e0c10f83cd5c909434c799a4da9823f028cd63",
+      "bytes": 1762
+    },
+    {
+      "path": "cache/org/jetbrains/kotlin/kotlin-stdlib/1.6.0/kotlin-stdlib-1.6.0.pom",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/1.6.0/kotlin-stdlib-1.6.0.pom",
+      "sha256": "712a6ddd717ccd5b0d50e74c335e93a9b191052cd7bb8296052009bb85c94412",
+      "bytes": 1551
+    },
+    {
+      "path": "cache/org/jetbrains/kotlin/kotlin-stdlib/1.6.20/kotlin-stdlib-1.6.20.pom",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/1.6.20/kotlin-stdlib-1.6.20.pom",
+      "sha256": "a08e83dcb0f298509877de22d526446476ddb31ea1c77530f2c81f24db166f99",
+      "bytes": 1554
+    },
+    {
+      "path": "cache/org/jetbrains/kotlin/kotlin-stdlib/1.6.21/kotlin-stdlib-1.6.21.pom",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/1.6.21/kotlin-stdlib-1.6.21.pom",
+      "sha256": "ce42725ba01bd836cdaa667d974df684bf6f8f15e7839263320ada7ffaae1f34",
+      "bytes": 1554
+    },
+    {
+      "path": "cache/org/jetbrains/kotlin/kotlin-stdlib/1.7.10/kotlin-stdlib-1.7.10.jar",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/1.7.10/kotlin-stdlib-1.7.10.jar",
+      "sha256": "e771fe74250a943e8f6346713201ff1d8cb95c3a5d1a91a22b65a9e04f6a8901",
+      "bytes": 1524620
+    },
+    {
+      "path": "cache/org/jetbrains/kotlin/kotlin-stdlib/1.7.10/kotlin-stdlib-1.7.10.pom",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/1.7.10/kotlin-stdlib-1.7.10.pom",
+      "sha256": "6cc0cf5a2bc02dee060ebb90c3535fc3ddbd7a3bab210ace3e142aaf81764d81",
+      "bytes": 1554
+    },
+    {
+      "path": "cache/org/jetbrains/kotlinx/kotlinx-coroutines-android/1.6.1/kotlinx-coroutines-android-1.6.1.jar",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-android/1.6.1/kotlinx-coroutines-android-1.6.1.jar",
+      "sha256": "961ebde8138779a299430ca325a86e28c490527a87ba518362fa45c44c7e7e95",
+      "bytes": 19515
+    },
+    {
+      "path": "cache/org/jetbrains/kotlinx/kotlinx-coroutines-android/1.6.1/kotlinx-coroutines-android-1.6.1.pom",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-android/1.6.1/kotlinx-coroutines-android-1.6.1.pom",
+      "sha256": "09ffe59f7cd9dcb5ec440803df8dcc8581c2de17d2eba0088ba3cdd8c57310a2",
+      "bytes": 2224
+    },
+    {
+      "path": "cache/org/jetbrains/kotlinx/kotlinx-coroutines-bom/1.6.1/kotlinx-coroutines-bom-1.6.1.pom",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-bom/1.6.1/kotlinx-coroutines-bom-1.6.1.pom",
+      "sha256": "43e780ec3da6959c7d2c97fd6b4462ca9997e9c03cd6c43ee92f6604022d4bae",
+      "bytes": 4290
+    },
+    {
+      "path": "cache/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.1/kotlinx-coroutines-core-jvm-1.6.1.jar",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.1/kotlinx-coroutines-core-jvm-1.6.1.jar",
+      "sha256": "3a93ffd052844643c0fef950ae5578db47cccbe9e7176d681333182e232bb0f1",
+      "bytes": 1492143
+    },
+    {
+      "path": "cache/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.1/kotlinx-coroutines-core-jvm-1.6.1.pom",
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.1/kotlinx-coroutines-core-jvm-1.6.1.pom",
+      "sha256": "96e60ab1b6af0ce4056ec868bf6a64a558ee97095da47f74aa69153314d3570e",
+      "bytes": 2214
+    },
+    {
+      "path": "cache/org/sonatype/oss/oss-parent/9/oss-parent-9.pom",
+      "url": "https://repo.maven.apache.org/maven2/org/sonatype/oss/oss-parent/9/oss-parent-9.pom",
+      "sha256": "fb40265f982548212ff82e362e59732b2187ec6f0d80182885c14ef1f982827a",
+      "bytes": 6569
+    }
+  ]
+}

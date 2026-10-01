@@ -1,0 +1,46 @@
+<?xml version='1.0' encoding='utf-8'?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.gongyo.yuranphoto" android:versionCode="6" android:versionName="1.4.0">
+ <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+ <uses-permission android:name="com.gongyo.yuranphoto.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+ <permission android:name="com.gongyo.yuranphoto.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" android:protectionLevel="signature" />
+ <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="35" />
+ <uses-permission android:name="android.permission.CAMERA" />
+ <uses-feature android:name="android.hardware.camera.any" android:required="false" />
+ <uses-permission android:name="com.gongyo.orderly.permission.READ_PHOTOS" />
+ <uses-permission android:name="com.gongyo.orderly.permission.WRITE_PHOTOS" />
+ <queries>
+  <package android:name="com.gongyo.orderly" />
+  <provider android:authorities="com.gongyo.orderly.photos" />
+  <intent>
+   <action android:name="android.media.action.IMAGE_CAPTURE" />
+  </intent>
+ </queries>
+ <application android:label="@string/app_name" android:allowBackup="false" android:supportsRtl="true" android:theme="@android:style/Theme.Material.Light.NoActionBar">
+  <activity android:name="com.gongyo.yuranphoto.PhotoActivity" android:exported="true">
+   <intent-filter>
+    <action android:name="android.intent.action.MAIN" />
+    <category android:name="android.intent.category.LAUNCHER" />
+   </intent-filter>
+  </activity>
+  <activity android:name="com.gongyo.yuranphoto.BarcodeScannerActivity" android:exported="false" android:screenOrientation="portrait" />
+  <activity android:name="com.gongyo.yuranphoto.LabelScanActivity" android:exported="false" />
+  <provider android:name="com.gongyo.yuranphoto.CaptureContentProvider" android:authorities="com.gongyo.yuranphoto.capture" android:exported="false" android:grantUriPermissions="true" />
+  <provider android:name="androidx.startup.InitializationProvider" android:authorities="com.gongyo.yuranphoto.androidx-startup" android:exported="false">
+   <meta-data android:name="androidx.lifecycle.ProcessLifecycleInitializer" android:value="androidx.startup" />
+  </provider>
+  <service android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery" android:exported="false">
+   <meta-data android:name="backend:com.google.android.datatransport.cct.CctBackendFactory" android:value="cct" />
+  </service>
+  <service android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService" android:exported="false" android:permission="android.permission.BIND_JOB_SERVICE">
+        </service>
+  <receiver android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver" android:exported="false" />
+  <activity android:name="com.google.android.gms.common.api.GoogleApiActivity" android:theme="@android:style/Theme.Translucent.NoTitleBar" android:exported="false" />
+  <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version" />
+  <service android:name="com.google.mlkit.common.internal.MlKitComponentDiscoveryService" android:exported="false" android:directBootAware="true">
+   <meta-data android:name="com.google.firebase.components:com.google.mlkit.vision.text.internal.TextRegistrar" android:value="com.google.firebase.components.ComponentRegistrar" />
+   <meta-data android:name="com.google.firebase.components:com.google.mlkit.common.internal.CommonComponentRegistrar" android:value="com.google.firebase.components.ComponentRegistrar" />
+   <meta-data android:name="com.google.firebase.components:com.google.mlkit.vision.common.internal.VisionCommonRegistrar" android:value="com.google.firebase.components.ComponentRegistrar" />
+  </service>
+  <provider android:name="com.google.mlkit.common.internal.MlKitInitProvider" android:authorities="com.gongyo.yuranphoto.mlkitinitprovider" android:exported="false" android:initOrder="99" />
+ </application>
+</manifest>
