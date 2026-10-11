@@ -50,3 +50,18 @@ jobs:
       - name: Compile photo without signing
         shell: bash
         run: env JAVA_HOME="$JAVA_HOME_17_X64" ANDROID_SDK_ROOT="$ANDROID_HOME" bash work/photo-android/build.sh outputs/yuran-photo-unsigned-qa.apk
+  packaging_policy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Read the exact source revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin https://github.com/selfness-byte/yuran-android-build.git
+          git fetch --no-tags --depth=1 origin "$GITHUB_SHA"
+          git checkout --detach FETCH_HEAD
+      - name: Verify packaging and publication policies with synthetic inputs
+        shell: bash
+        run: python3 -m unittest discover -s cloud/tests -p 'test_*.py' -v
