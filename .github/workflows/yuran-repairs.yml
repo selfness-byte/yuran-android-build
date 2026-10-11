@@ -1,0 +1,27 @@
+name: Yuran repair checks
+on:
+  push:
+    branches: [codex/yuran-repairs-20261011]
+permissions:
+  contents: read
+concurrency:
+  group: yuran-repairs
+  cancel-in-progress: false
+jobs:
+  compile:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Read the exact source revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin https://github.com/selfness-byte/yuran-android-build.git
+          git fetch --no-tags --depth=1 origin "$GITHUB_SHA"
+          git checkout --detach FETCH_HEAD
+      - name: Compile the existing Android QA app
+        shell: bash
+        run: |
+          set -euo pipefail
+          env JAVA_HOME="$JAVA_HOME_17_X64" ANDROID_SDK_ROOT="$ANDROID_HOME" bash cloud/build-qa.sh
