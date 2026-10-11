@@ -26,6 +26,10 @@ public final class IntakeText {
  public static String unique(Pattern pattern,String text){Set<String> values=fields(pattern,text);return values.size()==1?values.iterator().next():"";}
  private static Set<String> fields(Pattern pattern,String text){Set<String> values=new LinkedHashSet<>();Matcher m=pattern.matcher(text);while(m.find())values.add(m.group(1).trim().replaceAll("[ \\t]+"," "));return values;}
  public static boolean isGarmentSpan(String text,int start,int end){Matcher m=GARMENT_SIZE.matcher(text);while(m.find())if(start<m.end(1)&&end>m.start(1))return true;return false;}
+ private static boolean isLabelFieldSpan(String text,int start,int end){
+  for(Pattern field:new Pattern[]{SKU,COLOR,GARMENT_SIZE}){Matcher m=field.matcher(text);while(m.find())if(start<m.end(1)&&end>m.start(1))return true;}
+  return false;
+ }
  public static Result parse(String input){
   String text=normalize(input);long[] counts=new long[4];boolean[] seen=new boolean[4];List<String> warnings=new ArrayList<>();
   if(text.length()>12000)return new Result("","","",counts,false,"읽힌 글자가 너무 많습니다.");
@@ -42,7 +46,7 @@ public final class IntakeText {
    }
    if(!clean||row.isEmpty()||!value.substring(end).trim().matches("[,;/·]*")){
     Matcher visible=VISIBLE_COUNT.matcher(value);
-    while(visible.find())if(!isGarmentSpan(value,visible.start(),visible.end()))malformed=true;
+    while(visible.find())if(!isLabelFieldSpan(value,visible.start(),visible.end()))malformed=true;
     continue;
    }
    for(String[] pair:row){int index=pair[0].equals("S")?0:pair[0].equals("M")?1:pair[0].equals("L")?2:3;long n=Long.parseLong(pair[1]);

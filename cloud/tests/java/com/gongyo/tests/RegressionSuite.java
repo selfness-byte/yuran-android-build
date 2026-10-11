@@ -182,6 +182,7 @@ public final class RegressionSuite {
    equal(false,gate.observe("QA200",1000));equal(false,gate.observe("QA300",1400));equal(false,gate.observe("QA200",1800));
    equal(false,gate.observe("QA200",1700));equal(false,gate.observe("QA200",1999));equal(true,gate.observe("QA200",2000));
   });
+  test("explicit product and color digits are not quantities",()->{Object r=intake("STYLE: M123\nCOLOR: M3\nS2");equal(true,field(r,"ready"));quantities(r,2,0,0,0);});
   System.out.println("RESULT "+passed+" passed; "+failed+" failed");
   if(failed>0)System.exit(1);
  }
