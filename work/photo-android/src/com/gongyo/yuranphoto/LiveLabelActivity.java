@@ -63,7 +63,7 @@ public final class LiveLabelActivity extends Activity {
      else restored=recovery.begin(client.compatibility().generation,"");
     }
     captureState=restored;generation=restored.generation;targetWorkId=restored.targetWorkId;
-    ready=true;message(restored.interrupted()?"이전 촬영이 중단됐습니다. 저장 목록을 확인한 뒤 같은 품번 다음 장 준비를 눌러 주세요.":restored.busy()?"사진 저장과 입고 결과를 확인하고 있습니다.":"품번을 읽으면 사진을 저장하고 완료음이 납니다.");
+    ready=true;message(restored.interrupted()?"이전 촬영이 중단됐습니다. 저장 목록을 확인한 뒤 같은 품번 다음 장 준비를 눌러 주세요.":restored.busy()?"사진 저장과 입고 결과를 확인하고 있습니다.":"품번을 읽으면 사진을 기기에 보관하고 촬영 확인음이 납니다.");
     if(!closing)catalog.execute(this::loadCatalog);
    }catch(Exception e){message(e.getMessage());}
   });
@@ -166,7 +166,7 @@ public final class LiveLabelActivity extends Activity {
    if(rotation==0)upright=frame;else{Matrix matrix=new Matrix();matrix.postRotate(rotation);upright=Bitmap.createBitmap(frame,0,0,frame.getWidth(),frame.getHeight(),matrix,true);}
    CaptureInbox.Entry entry=inbox.save(upright,null,text,owned.mode,owned.generation,owned.targetWorkId,sku);
    recovery.saved(owned,token,sku);lastSavedId=entry.id;
-   main.post(()->{if(active&&!closing){status.setText((entry.sku.isEmpty()?"사진":entry.sku)+" 저장 완료 · 다음 택을 비춰 주세요.");beep();}});
+   main.post(()->{if(active&&!closing){status.setText((entry.sku.isEmpty()?"사진":entry.sku)+(owned.mode.equals("intake")?" 기기에 보관 · 유란노트 전송 확인 중":" 기기에 보관 · 재고 확인 중"));beep();}});
    if(mode.equals("intake")&&entry.ready){CaptureInbox.Entry result=inbox.submit(entry.id,client);if(lastSavedId.equals(result.id))message(result.sku+" · "+result.message);}
    else if(mode.equals("lookup")&&!entry.sku.isEmpty()){
     CaptureLookup.Result result=CaptureLookup.publish(entry.id,client.stockSummary(entry.sku),(id,summary)->inbox.lookupResult(id,summary));

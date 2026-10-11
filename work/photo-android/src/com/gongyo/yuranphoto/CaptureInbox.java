@@ -15,7 +15,7 @@ import java.util.*;
 public final class CaptureInbox {
  private static CaptureInbox instance;
  // Shared by both modes: grant lifecycle lock -> recovery lock. Never use the inbox monitor for grant handoff.
- private final Object grantLifecycleLock=new Object();
+ private final Object grantLifecycleLock=new Object(),deliveryLock=new Object();
  public Object grantLifecycleLock(){return grantLifecycleLock;}
  private final Map<String,CaptureRecovery> recovery=new HashMap<>();
  public synchronized CaptureRecovery recovery(String mode)throws IOException{check();CaptureRecovery value=recovery.get(mode);if(value==null){value=new CaptureRecovery(directory,io,mode);recovery.put(mode,value);}return value;}
@@ -28,7 +28,7 @@ public final class CaptureInbox {
  private static final int MAX_ENTRIES=500,MAX_INDEX=8*1024*1024,MAX_IMAGE=8*1024*1024;
  private static final long MAX_DISK=256L*1024*1024;
  private final android.content.ContentResolver resolver;
- private final File directory;private final CheckedAtomicFile.FileOps io;private final CheckedAtomicFile index;private IOException unavailable;
+ private final File directory;private final CheckedAtomicFile.FileOps io;private final CheckedAtomicFile index;private volatile IOException unavailable;
  private CaptureInbox(Context context)throws IOException{
   resolver=context.getContentResolver();io=new AndroidFileOps(context.getFilesDir());directory=new File(context.getFilesDir(),"label-inbox");CheckedAtomicFile.directory(directory,io);index=new CheckedAtomicFile(new File(directory,"index.json"),io);
   entries();
@@ -65,7 +65,7 @@ public final class CaptureInbox {
   }
  }
  public synchronized void update(Entry replacement)throws IOException{update(replacement,false);}
- private void update(Entry replacement,boolean relink)throws IOException{
+ private synchronized void update(Entry replacement,boolean relink)throws IOException{
   List<Entry> values=entries();int index=find(values,replacement.id);Entry old=values.get(index);
   if(!relink&&!old.photoAttemptId.equals(replacement.photoAttemptId))throw new IOException("사진 전송 시도는 명시적으로 확인해야 합니다.");
   if(!immutable(old).equals(immutable(replacement)))throw new IOException("저장 사진 식별자는 변경할 수 없습니다.");
@@ -74,14 +74,16 @@ public final class CaptureInbox {
   values.set(index,replacement);persist(values);
  }
  /** Serializes entry submission so concurrent screens cannot prepare divergent requests. */
- public synchronized Entry submit(String id,PhotoClient client)throws IOException{
-  try{return submitLocked(id,client);}catch(IOException e){fence(e);throw e;}
+ public Entry submit(String id,PhotoClient client)throws IOException{
+  synchronized(deliveryLock){try{return submitLocked(id,client);}catch(IOException e){fence(e);throw e;}}
  }
  private Entry submitLocked(String id,PhotoClient client)throws IOException{
-  Entry request=entry(id);if(!"intake".equals(request.mode)||(!request.ready&&!request.committed))return request;
+  Entry request;
+  synchronized(this){
+   request=entry(id);if(!"intake".equals(request.mode)||(!request.ready&&!request.committed))return request;
+   if(!request.committed){IntakeContract.fingerprint(request.generation,request.targetWorkId,request.sourceHash,request.sku,request.color,request.quantities);request.submitted=true;request.message="1/2 수량 등록 결과 확인 중";update(request);}
+  }
   if(!request.committed){
-   IntakeContract.fingerprint(request.generation,request.targetWorkId,request.sourceHash,request.sku,request.color,request.quantities);
-   request.submitted=true;request.message="1/2 수량 등록 결과 확인 중";update(request);
    Bundle reply=client.registerIntake(request.generation,request.targetWorkId,request.id,request.sourceHash,request.sku,request.color,request.quantities);
    request=entry(id);request.committed=PhotoContract.OK.equals(reply.getString("status"));
    request.message=request.committed?"1/2 수량 저장 확인 · 사진 연결 대기":"수량 등록 확인 필요 · "+reply.getString("reason","");
@@ -127,8 +129,8 @@ public final class CaptureInbox {
   private PhotoRetry(Entry entry,CaptureTarget target,boolean replacingAttempt){entryId=entry.id;previousAttempt=attemptId(entry);sku=entry.sku;color=entry.color;currentPhotoVersionId=target.photoVersionId;this.target=target;this.replacingAttempt=replacingAttempt;}
  }
  /** Returns an immutable confirmation snapshot; preparing it never registers a replacement. */
- public synchronized PhotoRetry reviewPhotoRetry(String id,PhotoClient client)throws IOException{
-  try{return reviewPhotoRetryLocked(id,client);}catch(IOException e){fence(e);throw e;}
+ public PhotoRetry reviewPhotoRetry(String id,PhotoClient client)throws IOException{
+  synchronized(deliveryLock){try{return reviewPhotoRetryLocked(id,client);}catch(IOException e){fence(e);throw e;}}
  }
  private PhotoRetry reviewPhotoRetryLocked(String id,PhotoClient client)throws IOException{
   check();Entry entry=entry(id);CaptureDelivery old=new CaptureDelivery(directory,io,attemptId(entry));
@@ -142,8 +144,8 @@ public final class CaptureInbox {
   return new PhotoRetry(entry,client.photoTarget(entry.generation,entry.targetWorkId,entry.sku,entry.color),replacing);
  }
  /** Called only after the user confirms this photo replacing the current SKU/color photo. */
- public synchronized Entry retryPhoto(PhotoRetry confirmation,PhotoClient client)throws IOException{
-  try{
+ public Entry retryPhoto(PhotoRetry confirmation,PhotoClient client)throws IOException{
+  synchronized(deliveryLock){try{
    Entry entry=entry(confirmation.entryId);
    if(!entry.committed||entry.photoCommitted||!attemptId(entry).equals(confirmation.previousAttempt)||!entry.sku.equals(confirmation.sku)||!entry.color.equals(confirmation.color))throw new IOException("사진 상태가 바뀌었습니다. 다시 확인해 주세요.");
    confirmation.target.requireSame(client.photoTarget(entry.generation,entry.targetWorkId,entry.sku,entry.color));
@@ -160,13 +162,13 @@ public final class CaptureInbox {
     replacement.prepareAndLink(next,link);
    }
    return submitLocked(entry.id,client);
-  }catch(IOException e){fence(e);throw e;}
+  }catch(IOException e){fence(e);throw e;}}
  }
 
  public synchronized Entry lookupResult(String id,String summary)throws IOException{
   Entry value=entry(id);value.message=CaptureLookup.bounded(summary);update(value);return value;
  }
- private byte[] photoBytes(Entry e)throws IOException{
+ private synchronized byte[] photoBytes(Entry e)throws IOException{
   check();return new CheckedAtomicFile(photoFile(e),io).readFully(MAX_IMAGE,b->{if(!hash(b).equals(e.imageHash))throw new IOException("보관 사진이 변경됐습니다.");});
  }
  public synchronized Bitmap thumbnail(Entry e,int edge)throws IOException{

@@ -112,7 +112,7 @@ public final class PhotoClient {
 
  /** Read the active work and revision in one owner snapshot, outside the local source lock. */
  public CaptureTarget captureTarget(String generation,String workId)throws IOException{
-  compatibility();
+  PhotoContract.Compatibility version=compatibility();if(version.noteVersionCode<24)throw new IOException("사진 연결을 사용하려면 유란노트도 1.17.2 이상으로 업데이트해 주세요. 저장된 수량과 사진은 유지합니다.");
   Bundle input=new Bundle();input.putInt("protocolVersion",1);Bundle reply=call("getCompatibility",input);PhotoBundleCodec.response(reply);
   if(!PhotoContract.OK.equals(reply.getString("status")))throw new IOException("원래 입고 작업을 확인하지 못했습니다.");
   CaptureTarget target=new CaptureTarget(PhotoBundleCodec.readCompatibility(reply),reply.getString("targetWorkId",""));
@@ -120,7 +120,7 @@ public final class PhotoClient {
  }
  public CaptureTarget photoTarget(String generation,String workId,String sku,String color)throws IOException{
   CaptureTarget scope=captureTarget(generation,workId);Bundle input=new Bundle();input.putInt("protocolVersion",1);input.putString("generation",scope.compatibility.generation);input.putLong("revision",scope.compatibility.revision);input.putString("targetWorkId",scope.workId);input.putString("sku",PhotoContract.key(sku));input.putString("sourceColor",PhotoContract.key(color));PhotoBundleCodec.request(input,"getPhotoTarget");
-  Bundle reply=call("getPhotoTarget",input);PhotoBundleCodec.response(reply);
+  Bundle reply;try{reply=call("getPhotoTarget",input);}catch(UnsupportedOperationException unsupported){throw new IOException("사진 연결을 위해 유란노트도 최신 버전으로 업데이트해 주세요. 원래 사진은 유지합니다.",unsupported);}PhotoBundleCodec.response(reply);
   if(!PhotoContract.OK.equals(reply.getString("status")))throw new IOException("사진 대상을 다시 확인해 주세요: "+reply.getString("reason",""));
   PhotoContract.Compatibility snapshot=new PhotoContract.Compatibility(1,reply.getString("generation",""),reply.getLong("revision",-1),scope.compatibility.noteVersionCode);
   CaptureTarget target=new CaptureTarget(snapshot,reply.getString("targetWorkId",""),reply.getString("productId",""),reply.getString("variantId",""),reply.getString("photoVersionId",""));
@@ -142,7 +142,7 @@ public final class PhotoClient {
     if(confirmed!=null&&raw.getPath().equals(confirmedPath))throw new IOException("다른 사진 등록이 이 파일을 사용 중입니다.");
     CheckedAtomicFile prepared=new CheckedAtomicFile(raw,io);
     try{prepared.readFully((int)MAX_SOURCE_BYTES,stored->{if(!Arrays.equals(stored,bytes))throw new IOException("입고 준비 사진 내용이 다릅니다. 원래 사진을 유지합니다.");});}
-    catch(CheckedAtomicFile.MissingFileException absent){prepared.write(bytes);}
+    catch(CheckedAtomicFile.MissingFileException absent){CaptureStorageBudget.requireAdditional(directory,io,bytes.length);prepared.write(bytes);}
     checkImage(raw);
    }catch(IOException e){fence(e);throw e;}
    String uri="content://"+RuntimeIds.CAPTURE_AUTHORITY+PhotoContract.PREPARED_SOURCE_PATH_PREFIX+entryId+PhotoContract.PREPARED_SOURCE_SUFFIX;

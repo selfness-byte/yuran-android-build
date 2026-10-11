@@ -184,8 +184,20 @@ public final class SyncRegressionChecks {
   rejected(()->photo.requireSame(approved),"changed target photo must require a new confirmation");
  }
 
+
+ private static void preparedBudget()throws Exception{
+  Disk io=new Disk();try{
+   File directory=new File(io.root,"prepared");Files.createDirectory(directory.toPath());File retained=new File(directory,"old.input");
+   try(RandomAccessFile file=new RandomAccessFile(retained,"rw")){file.setLength(CaptureStorageBudget.MAX_PREPARED_BYTES);}
+   rejected(()->CaptureStorageBudget.requireAdditional(directory,io,1),"new attempts cannot exceed the shared prepared budget");
+   check(retained.length()==CaptureStorageBudget.MAX_PREPARED_BYTES,"budget refusal never removes pending bytes");
+   CaptureStorageBudget.requireAdditional(directory,io,0);
+   try(RandomAccessFile file=new RandomAccessFile(retained,"rw")){file.setLength(32);}
+   CaptureStorageBudget.requireAdditional(directory,io,1024);
+  }finally{io.clean();}
+ }
  public static void main(String[] args)throws Exception{
-  cancellation(false);cancellation(true);successfulCancellation();deliveryRestart();ackWriteFailure(false);ackWriteFailure(true);rejectedAck();lookupIdentity();completeGrant(false);completeGrant(true);replacementLink(false);replacementLink(true);targetScope();
+  cancellation(false);cancellation(true);successfulCancellation();deliveryRestart();ackWriteFailure(false);ackWriteFailure(true);rejectedAck();lookupIdentity();completeGrant(false);completeGrant(true);replacementLink(false);replacementLink(true);targetScope();preparedBudget();
   System.out.println("SyncRegressionChecks passed (durable grants, lost ACK, immutable photo attempts, explicit replacement, frozen work, bounded lookup)");
  }
 }
