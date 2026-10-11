@@ -31,6 +31,7 @@ public final class MainActivity extends Activity {
     private byte[] screenBaseline;
     private DialogDraft dialogDraft;
     private AlertDialog activeEditor;
+    private FrozenExportPreview.Handle exportPreview;
     private final List<AlertDialog> editorDialogs=new ArrayList<>();
     private boolean conflicted,transitioning;
     private Runnable captureDialogInput;
@@ -222,7 +223,7 @@ public final class MainActivity extends Activity {
     }
     @Override protected void onPause(){super.onPause();if(ready){capture();if(!backupBlocked()){flushSourceHistory();persist();}}}
     @Override protected void onStop(){if(observingPhotos){getContentResolver().unregisterContentObserver(photoObserver);observingPhotos=false;}detachBackupSession();super.onStop();}
-    @Override protected void onDestroy(){detachBackupSession();handler.removeCallbacksAndMessages(null);super.onDestroy();}
+    @Override protected void onDestroy(){if(exportPreview!=null){exportPreview.close();exportPreview=null;}detachBackupSession();handler.removeCallbacksAndMessages(null);super.onDestroy();}
     @Override public void onBackPressed(){if(backupBlocked()){backupSession.cancel(this,backupSession.operation,false);return;}if(tab!=0){navigate(0);}else super.onBackPressed();}
     private void fatal(String message){TextView v=text(message,18,INK);v.setPadding(dp(24),dp(40),dp(24),dp(24));setContentView(v);}
     private int dp(float n){return Math.round(n*getResources().getDisplayMetrics().density);}
@@ -1148,7 +1149,8 @@ public final class MainActivity extends Activity {
         if(!"xlsx".equals(frozen.format)){executeExportContents(frozen);return;}
         try{
             MediaSource source=store.exportMedia(repository,exportMediaStore,frozen);source.checkReady();
-            FrozenExportPreview.show(this,frozen,source,()->executeExportContents(frozen),()->clearFrozenExport(frozen));
+            if(exportPreview!=null)exportPreview.close();
+            exportPreview=FrozenExportPreview.show(this,frozen,source,()->executeExportContents(frozen),()->clearFrozenExport(frozen));
         }catch(Exception failure){storageFailure(failure);alert("사진 미리보기 오류",failure.getMessage());}
     }
     private void executeExportContents(ExportSnapshot frozen){

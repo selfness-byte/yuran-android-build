@@ -40,6 +40,7 @@ public final class ExportPhotoChecks {
   check(!zip.containsKey("xl/media/image2.jpg"),"shared asset not duplicated");
   String sheet=text(zip,"xl/worksheets/sheet1.xml"),drawing=text(zip,"xl/drawings/drawing1.xml");
   check(sheet.contains("QA-EX0")&&!sheet.contains("MUTATED")&&!sheet.contains("QA-EX1")&&sheet.contains("QA-EX2"),"frozen identity/order and zero-row filtering");
+  check(sheet.contains("<c r=\"D3\" s=\"3\" t=\"n\"><v>2</v>"),"frozen quantity survives source callback mutation");
   check(drawing.split("<xdr:oneCellAnchor>",-1).length-1==2,"both nonzero rows have anchors");
   check(drawing.contains("<xdr:row>2</xdr:row>")&&drawing.contains("<xdr:row>3</xdr:row>"),"anchors match compacted rows");
   check(text(zip,"xl/worksheets/_rels/sheet1.xml.rels").contains("../drawings/drawing1.xml"),"worksheet drawing relationship");

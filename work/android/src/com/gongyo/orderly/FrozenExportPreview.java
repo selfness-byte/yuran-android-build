@@ -13,7 +13,12 @@ import java.util.concurrent.*;
 /** Shows exactly the row/photo snapshot that the subsequent XLSX writer consumes. */
 final class FrozenExportPreview {
  private FrozenExportPreview() {}
- static void show(Activity activity,ExportSnapshot input,MediaSource media,Runnable proceed,Runnable cancel)throws IOException {
+ static final class Handle implements AutoCloseable {
+  private Runnable cleanup;
+  Handle(Runnable cleanup){this.cleanup=cleanup;}
+  public void close(){if(cleanup!=null){Runnable action=cleanup;cleanup=null;action.run();}}
+ }
+ static Handle show(Activity activity,ExportSnapshot input,MediaSource media,Runnable proceed,Runnable cancel)throws IOException {
   final ExportSnapshot frozen=ExportSnapshot.decode(ExportSnapshot.encode(input));
   final ExecutorService worker=Executors.newSingleThreadExecutor();
   final Handler main=new Handler(Looper.getMainLooper());
@@ -66,7 +71,8 @@ final class FrozenExportPreview {
    }
   };
   list.setAdapter(adapter);
-  dialog.setOnDismissListener(d->{closed[0]=true;worker.shutdown();cache.evictAll();});
+  Handle handle=new Handle(()->{closed[0]=true;worker.shutdownNow();cache.evictAll();dialog.dismiss();});
+  dialog.setOnDismissListener(d->handle.close());
   dialog.show();dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
   worker.execute(()->{
    String error=null;try{frozen.verifyMedia(media);}catch(Exception problem){error=problem.getMessage();}
@@ -75,5 +81,6 @@ final class FrozenExportPreview {
     else {summary.setText("사진 확인 필요: "+(failure==null?"사진을 읽지 못했습니다.":failure));dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);}
    });
   });
+  return handle;
  }
 }
