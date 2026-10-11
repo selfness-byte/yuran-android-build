@@ -143,6 +143,35 @@ class PackageChecks(unittest.TestCase):
             with self.subTest(invalid=invalid), self.assertRaises(ValueError):
                 self.qa.certificate_digest(invalid)
 
+    def test_keystore_inspection_exports_only_public_certificate_to_stdout(self):
+        der = b"synthetic-public-certificate-only"
+        pem = "-----BEGIN CERTIFICATE-----\n" + base64.b64encode(der).decode() + "\n-----END CERTIFICATE-----\n"
+        config = self.qa.signing_config(self.environment(pathlib.Path("/synthetic")))
+        calls = []
+        def runner(*args):
+            calls.append([str(value) for value in args])
+            return pem
+        digest = self.qa.keystore_signer(config, pathlib.Path("/synthetic/jdk"), runner)
+        self.assertEqual(digest, hashlib.sha256(der).hexdigest())
+        self.assertEqual(len(calls), 1)
+        args = calls[0]
+        self.assertIn("-exportcert", args)
+        self.assertEqual(args[args.index("-storepass:env") + 1], "YURAN_QA_STORE_PASSWORD")
+        self.assertNotIn("-file", args)
+        self.assertNotIn("-genkeypair", args)
+        self.assertNotIn("synthetic-store-secret", args)
+
+    def test_tool_runner_passes_secrets_only_in_environment(self):
+        env = self.environment(pathlib.Path("/synthetic"))
+        with patch("subprocess.check_output", return_value="synthetic result") as tool:
+            result = self.qa.run("/synthetic/apksigner", "verify", environment=env)
+        self.assertEqual(result, "synthetic result")
+        args, options = tool.call_args
+        self.assertNotIn("synthetic-store-secret", repr(args))
+        self.assertNotIn("synthetic-key-secret", repr(args))
+        self.assertEqual(options["env"], env)
+        self.assertEqual(options["stdin"], self.qa.subprocess.DEVNULL)
+
     def test_package_and_strictly_newer_version_required_for_both_apps(self):
         for name, previous in (("note", 23), ("photo", 6)):
             record = self.qa.validate_badging(name, badging(name))
@@ -191,7 +220,8 @@ class PackageChecks(unittest.TestCase):
     def test_second_apk_failure_leaves_no_download_or_manifest(self):
         for changes in ({"signer_change": {"photo": "0" * 64}},
                         {"signed_change": {"photo": {"package": "com.gongyo.yuranphoto"}}},
-                        {"signed_change": {"photo": {"version": 6}}}):
+                        {"signed_change": {"photo": {"version": 6}}},
+                        {"signed_change": {"photo": {"version": 8}}}):
             with tempfile.TemporaryDirectory() as temp:
                 folder = pathlib.Path(temp)
                 env = self.fixtures(folder)

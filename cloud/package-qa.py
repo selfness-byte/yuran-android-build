@@ -1,53 +1,181 @@
-"""Create a matched, isolated pair of installable QA APKs, never a production update."""
-import hashlib, json, os, pathlib, re, subprocess, tempfile
-root = pathlib.Path.cwd()
-out = root / "qa-download"
-out.mkdir(exist_ok=True)
-sdk = pathlib.Path(os.environ["ANDROID_HOME"]) / "build-tools" / "35.0.0"
-jdk = pathlib.Path(os.environ["JAVA_HOME_17_X64"])
-def run(*args):
-    return subprocess.check_output([str(a) for a in args], text=True, stderr=subprocess.STDOUT)
-records = []
-with tempfile.TemporaryDirectory(prefix="yuran-qa-sign-") as temp:
-    key = pathlib.Path(temp) / "test-only.jks"
-    run(jdk / "bin/keytool", "-genkeypair", "-noprompt", "-keystore", key,
-        "-alias", "yuranqa", "-keyalg", "RSA", "-keysize", "3072", "-validity", "3650",
-        "-storepass", "android", "-keypass", "android", "-dname", "CN=Yuran QA Test Only",
-        "-storetype", "JKS")
-    for name, package in [("note", "com.gongyo.orderly.qa"), ("photo", "com.gongyo.yuranphoto.qa")]:
+"""Package QA updates only with the existing QA signer; never create a new key."""
+import base64
+import binascii
+import hashlib
+import json
+import os
+import pathlib
+import re
+import subprocess
+import sys
+import tempfile
+
+EXPECTED_SIGNER = "86ad771a9b587e08ae9d7534a16690ffd0d739484ddc7ed677490423ff1354a0"
+QA_APPS = {
+    "note": ("com.gongyo.orderly.qa", 23),
+    "photo": ("com.gongyo.yuranphoto.qa", 6),
+}
+STORE_PASSWORD_ENV = "YURAN_QA_STORE_PASSWORD"
+KEY_PASSWORD_ENV = "YURAN_QA_KEY_PASSWORD"
+
+
+def signing_config(environment):
+    """Validate explicit configuration without accessing a key or returning secrets."""
+    required = ("YURAN_QA_KEYSTORE", "YURAN_QA_KEY_ALIAS", STORE_PASSWORD_ENV, KEY_PASSWORD_ENV)
+    for name in required:
+        if not isinstance(environment.get(name), str) or not environment[name]:
+            raise ValueError("Missing " + name + "; existing QA signing credentials are required. No replacement key will be generated.")
+    key = pathlib.Path(environment["YURAN_QA_KEYSTORE"])
+    if not key.is_absolute():
+        raise ValueError("YURAN_QA_KEYSTORE must be an absolute path to the existing durable QA keystore")
+    return {"keystore": key, "alias": environment["YURAN_QA_KEY_ALIAS"]}
+
+
+def certificate_digest(pem):
+    matches = re.findall(r"-----BEGIN CERTIFICATE-----\s*(.*?)\s*-----END CERTIFICATE-----", pem, re.DOTALL)
+    if len(matches) != 1:
+        raise ValueError("Expected exactly one public signing certificate")
+    try:
+        der = base64.b64decode("".join(matches[0].split()), validate=True)
+    except (ValueError, binascii.Error) as failure:
+        raise ValueError("Invalid public signing certificate") from failure
+    if not der:
+        raise ValueError("Empty public signing certificate")
+    return hashlib.sha256(der).hexdigest()
+
+
+def keystore_signer(config, jdk, runner):
+    # Export only the public certificate to stdout; never export, copy, or create a key.
+    pem = runner(jdk / "bin" / "keytool", "-exportcert", "-rfc",
+                 "-keystore", config["keystore"], "-alias", config["alias"],
+                 "-storepass:env", STORE_PASSWORD_ENV)
+    return certificate_digest(pem)
+
+
+def validate_badging(name, badging):
+    if name not in QA_APPS:
+        raise ValueError("Unexpected QA app")
+    lines = [line for line in badging.splitlines() if line.startswith("package:")]
+    match = re.match(r"package: name='([^']+)' versionCode='([^']+)' versionName='([^']*)'(?:\s|$)",
+                     lines[0]) if len(lines) == 1 else None
+    package, minimum = QA_APPS[name]
+    if not match or match.group(1) != package:
+        raise ValueError("Production or unexpected package identity rejected for " + name)
+    code = match.group(2)
+    if not re.fullmatch(r"[0-9]{1,10}", code) or not minimum < int(code) <= 2100000000:
+        raise ValueError(name + " versionCode must be greater than installed QA version " + str(minimum))
+    return {"file": "yuran-" + name + "-qa.apk", "package": package,
+            "versionCode": code, "versionName": match.group(3)}
+
+
+def validate_signer(output):
+    counts = re.findall(r"^Number of signers:\s*([0-9]+)\s*$", output, re.MULTILINE)
+    markers = re.findall(r"^Signer #[0-9]+ certificate SHA-256 digest:", output, re.MULTILINE)
+    digests = re.findall(r"^Signer #1 certificate SHA-256 digest:\s*([0-9a-fA-F]{64})\s*$", output, re.MULTILINE)
+    if counts != ["1"] or len(markers) != 1 or len(digests) != 1 or digests[0].lower() != EXPECTED_SIGNER:
+        raise ValueError("APK must use exactly the existing QA signing certificate")
+    return EXPECTED_SIGNER
+
+
+def run(*args, environment):
+    try:
+        return subprocess.check_output([str(arg) for arg in args], text=True,
+                                       stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+                                       env=dict(environment))
+    except (OSError, subprocess.CalledProcessError) as failure:
+        # Tool output may contain private environment details; do not print it.
+        raise ValueError("QA packaging tool failed: " + pathlib.Path(args[0]).name
+                         + ". No download was published.") from failure
+
+
+def sha256_file(path):
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def package_pair(root, environment, runner=None):
+    config = signing_config(environment)  # Must precede directories, tool calls, and APK writes.
+    root = pathlib.Path(root)
+    out = root / "qa-download"
+    if out.exists() or out.is_symlink():
+        raise ValueError("Existing qa-download will not be overwritten; use a clean isolated workspace")
+    if not config["keystore"].is_file():
+        raise ValueError("Existing QA keystore is unavailable; no replacement key will be generated")
+    for name in ("ANDROID_HOME", "JAVA_HOME_17_X64", "GITHUB_SHA"):
+        if not environment.get(name):
+            raise ValueError("Missing " + name)
+    if not re.fullmatch(r"[0-9a-fA-F]{40}", environment["GITHUB_SHA"]):
+        raise ValueError("GITHUB_SHA must identify the exact source commit")
+    sdk = pathlib.Path(environment["ANDROID_HOME"]) / "build-tools" / "35.0.0"
+    jdk = pathlib.Path(environment["JAVA_HOME_17_X64"])
+    invoke = runner if runner is not None else lambda *args: run(*args, environment=environment)
+    if keystore_signer(config, jdk, invoke) != EXPECTED_SIGNER:
+        raise ValueError("Existing QA signer mismatch; production and newly generated signers are rejected")
+
+    # Check both unsigned inputs before creating staging or signing either APK.
+    inputs = []
+    for name in QA_APPS:
         source = root / "outputs" / ("yuran-" + name + "-unsigned-qa.apk")
-        target = out / ("yuran-" + name + "-qa.apk")
-        run(sdk / "apksigner", "sign", "--ks", key, "--ks-key-alias", "yuranqa",
-            "--ks-pass", "pass:android", "--key-pass", "pass:android", "--out", target, source)
-        verify = run(sdk / "apksigner", "verify", "--verbose", "--print-certs", target)
-        signer = re.search(r"Signer #1 certificate SHA-256 digest: ([0-9a-f]+)", verify).group(1)
-        run(sdk / "zipalign", "-c", "-P", "16", "4", target)
-        badging = run(sdk / "aapt2", "dump", "badging", target)
-        match = re.search(r"package: name='([^']+)' versionCode='([^']+)' versionName='([^']+)'", badging)
-        if not match or match.group(1) != package:
-            raise RuntimeError("Refusing artifact with unexpected production package identity")
-        records.append(dict(file=target.name, package=package, versionCode=match.group(2),
-                            versionName=match.group(3), sha256=hashlib.sha256(target.read_bytes()).hexdigest(),
-                            signingCertificateSHA256=signer, bytes=target.stat().st_size))
-if records[0]["signingCertificateSHA256"] != records[1]["signingCertificateSHA256"]:
-    raise RuntimeError("Companion and owner must share the same QA signer")
-production_signer = "4781bf14ca9fcfd67d3c518dfce01d9c6347d775dd89d222815e21a61206838f"
-if records[0]["signingCertificateSHA256"] == production_signer:
-    raise RuntimeError("This workflow is QA only")
-info = dict(commit=os.environ["GITHUB_SHA"],
-            sourceBaseline="d16f9f3b8f87a0b474ee175298e42516835461bc",
-            purpose="Isolated synthetic-data/device QA; not a production replacement",
-            originalSourceVersions=dict(note="1.17.1", photo="1.4.0"), apks=records)
-(out / "BUILD-INFO.json").write_text(json.dumps(info, indent=2, ensure_ascii=False) + "\n")
-(out / "SHA256SUMS.txt").write_text("".join(r["sha256"] + "  " + r["file"] + "\n" for r in records))
-(out / "읽어주세요.txt").write_text("""유란노트 / 유란사진 검사용 APK
-1. 유란노트 검사용 APK를 먼저, 유란사진 검사용 APK를 다음에 설치하세요.
-2. 검사용 앱은 기존 유란노트/유란사진과 따로 설치되며 기존 재고를 읽지 않습니다.
-3. 합성 품번과 수량으로 사진 선택/카메라/엑셀 동작을 먼저 확인하세요.
-4. 기존 앱 삭제 또는 실제 재고 백업 가져오기는 하지 마세요. 현재 배포 자료 형식과 다릅니다.
-5. 이 빌드는 두 APK가 같은 임시 시험 서명을 사용합니다. 다른 시험 빌드와의 업데이트 호환성은 보장하지 않습니다.
-6. 정식 덮어쓰기 배포에는 기존 서명 경로와 현재 자료 형식 호환 작업이 필요합니다.
+        if not source.is_file():
+            raise ValueError("Missing unsigned QA APK for " + name)
+        identity = validate_badging(name, invoke(sdk / "aapt2", "dump", "badging", source))
+        inputs.append((name, source, identity))
+
+    # Only this private staging area can contain incomplete signed output.
+    with tempfile.TemporaryDirectory(prefix=".yuran-qa-stage-", dir=root) as temp:
+        staging = pathlib.Path(temp)
+        records = []
+        for name, source, expected in inputs:
+            target = staging / expected["file"]
+            invoke(sdk / "apksigner", "sign", "--ks", config["keystore"],
+                   "--ks-key-alias", config["alias"], "--ks-pass", "env:" + STORE_PASSWORD_ENV,
+                   "--key-pass", "env:" + KEY_PASSWORD_ENV, "--v4-signing-enabled", "false",
+                   "--out", target, source)
+            signer = validate_signer(invoke(sdk / "apksigner", "verify", "--verbose", "--print-certs", target))
+            invoke(sdk / "zipalign", "-c", "-P", "16", "4", target)
+            identity = validate_badging(name, invoke(sdk / "aapt2", "dump", "badging", target))
+            if identity != expected:
+                raise ValueError("Signed APK identity changed from its verified unsigned input")
+            records.append(dict(identity, sha256=sha256_file(target),
+                                signingCertificateSHA256=signer, bytes=target.stat().st_size))
+
+        # Both APKs have passed signer, package, version, and alignment checks.
+        info = {
+            "commit": environment["GITHUB_SHA"],
+            "purpose": "Existing-signer QA update candidate; device validation required",
+            "installedQaVersionCodes": {name: values[1] for name, values in QA_APPS.items()},
+            "updateDelivery": "Manual QA artifacts only; no automatic updater is implemented",
+            "apks": records,
+        }
+        (staging / "BUILD-INFO.json").write_text(json.dumps(info, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        (staging / "SHA256SUMS.txt").write_text("".join(r["sha256"] + "  " + r["file"] + "\n" for r in records), encoding="utf-8")
+        (staging / "읽어주세요.txt").write_text("""유란노트 / 유란사진 QA 업데이트 후보
+1. 기존 QA 앱과 같은 패키지·서명을 사용하며 버전 코드는 기존 QA보다 높아야 합니다.
+2. 검증된 두 APK를 함께 확인하세요. 자동 다운로드·설치 기능은 구현되지 않았습니다.
+3. 기존 앱 삭제 또는 실제 재고 백업 가져오기를 하지 마세요.
+4. 기존 QA 서명키가 없으면 이 묶음은 생성되지 않습니다. 새 시험키로 대체하지 않습니다.
+5. 합성 자료로 업데이트와 기존 자료 유지, 사진 선택·촬영·OCR·엑셀 동작을 별도로 확인해야 합니다.
+6. 정식 앱 덮어쓰기 배포는 대상이 아닙니다.
 소스와 APK 해시는 BUILD-INFO.json / SHA256SUMS.txt에 있습니다.
-실제 Galaxy S24 Ultra의 초점·색상/사이즈 OCR·회전·완료음과 PC 엑셀 표시 검증은 별도로 필요합니다.
-""")
-print(json.dumps(info, indent=2))
+""", encoding="utf-8")
+        if out.exists() or out.is_symlink():
+            raise ValueError("qa-download appeared during verification; refusing to overwrite it")
+        staging.rename(out)
+    return info
+
+
+def main():
+    try:
+        info = package_pair(pathlib.Path.cwd(), os.environ)
+    except (ValueError, OSError) as failure:
+        print("QA packaging blocked: " + str(failure), file=sys.stderr)
+        return 1
+    print(json.dumps(info, indent=2, ensure_ascii=False))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

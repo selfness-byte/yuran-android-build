@@ -22,6 +22,7 @@ if [[ "$qa_suite" == all || "$qa_suite" == existing ]]; then
 fi
 if [[ "$qa_suite" == all || "$qa_suite" == note ]]; then
  "$qa_jdk/bin/java" -cp "$qa_classes" com.gongyo.orderly.NoteCompletionChecks
+ "$qa_jdk/bin/java" -cp "$qa_classes" com.gongyo.orderly.PhotoTargetChecks
 fi
 if [[ "$qa_suite" == all || "$qa_suite" == sync ]]; then
  "$qa_jdk/bin/java" -cp "$qa_classes" com.gongyo.tests.SyncRegressionChecks
