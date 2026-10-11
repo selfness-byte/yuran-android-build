@@ -108,6 +108,11 @@ public final class RegressionSuite {
    InventoryRepository repo=repository();equal("INVALID_REQUEST",field(register(repo,uuid(),HASH,"QA100","BLUE",new long[4]),"status"));equal(0L,repo.snapshot().revision);
   });
 
+
+  test("malformed visible quantity cannot silently become zero",()->equal(false,field(intake("STYLE: QA100\nCOLOR: BLUE\nS2\nM3/4"),"ready")));
+  test("inline size marker is excluded from color",()->{Object r=intake("STYLE: QA100\nCOLOR: BLUE SIZE: 95(M)\nM2");equal("BLUE",field(r,"color"));equal(true,field(r,"ready"));});
+  test("explicit suffix wins over shorter catalog product",()->{Bundle b=match("STYLE: QA100-R2\nCOLOR: BLUE\nSIZE: M",new String[][]{{"QA100","BLUE"}});equal("QA100-R2",b.getString("sku"));equal(0,b.<Bundle>getParcelableArrayList("matches").size());});
+
   System.out.println("RESULT "+passed+" passed; "+failed+" failed");
   if(failed>0)System.exit(1);
  }
