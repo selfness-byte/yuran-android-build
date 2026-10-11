@@ -138,7 +138,7 @@ public final class IntakeActivity extends Activity {
  private void cancelRemaining(){
   new AlertDialog.Builder(this).setTitle("남은 사진 선택 취소").setMessage("아직 처리하지 않은 선택을 취소합니다. 저장된 사진과 확인 중인 입고 요청은 원래 작업으로 저장 목록에 남습니다. 원본 사진은 삭제하지 않습니다.")
    .setNegativeButton("계속 보관",null).setPositiveButton("남은 선택 취소",(dialog,which)->work(()->{
-    synchronized(recovery){for(CaptureRecovery.Item item:recovery.remainingForDiscard())if(item.releaseGrant)releaseGrant(item.uri);recovery.discardRemaining();}
+    recovery.discardRemaining(this::releaseGrant);
     return "남은 선택을 취소했습니다. 저장된 사진은 목록에서 확인하세요.";
    })).show();
  }

@@ -84,6 +84,12 @@ public final class CaptureRecovery {
   Item old=head(owner,id);if(old.entryId.isEmpty())throw new IOException("사진 저장 전에는 대기 항목을 지울 수 없습니다.");
   List<Item> items=new ArrayList<>(batch.items);items.remove(0);publish(items.isEmpty()?null:new Batch(batch.generation,batch.targetWorkId,items));
  }
+ public interface GrantReleaser { void release(String uri); }
+ /** Keeps cancellation and owned-grant release under the same queue lock. */
+ public synchronized void discardRemaining(GrantReleaser releaser)throws IOException{
+  for(Item item:remainingForDiscard())if(item.releaseGrant)releaser.release(item.uri);
+  discardRemaining();
+ }
  public synchronized List<Item> remainingForDiscard()throws IOException{
   check();if(queueOwner!=0)throw new IOException("사진 처리가 진행 중입니다.");return batch==null?Collections.emptyList():new ArrayList<>(batch.items);
  }
