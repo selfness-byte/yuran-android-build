@@ -49,6 +49,7 @@ public final class IntakeText {
     row.add(new String[]{m.group(1),m.group(2)});end=m.end();
    }
    if(!clean||row.isEmpty()||!value.substring(end).trim().matches("[,;/·]*")){
+    if(value.matches("(?:XL|S|M|L)[ \\t]+.*"))malformed=true;
     Matcher visible=VISIBLE_COUNT.matcher(value);
     while(visible.find())if(!isLabelFieldSpan(value,visible.start(),visible.end()))malformed=true;
     continue;
