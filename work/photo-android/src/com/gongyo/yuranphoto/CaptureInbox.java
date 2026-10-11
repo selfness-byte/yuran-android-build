@@ -14,12 +14,15 @@ import java.util.*;
 /** Durable private label inbox. Photo publication precedes audio; stock has a separate receipt. */
 public final class CaptureInbox {
  private static CaptureInbox instance;
+ // Shared by both modes: grant lifecycle lock -> recovery lock. Never use the inbox monitor for grant handoff.
+ private final Object grantLifecycleLock=new Object();
+ public Object grantLifecycleLock(){return grantLifecycleLock;}
  private final Map<String,CaptureRecovery> recovery=new HashMap<>();
  public synchronized CaptureRecovery recovery(String mode)throws IOException{check();CaptureRecovery value=recovery.get(mode);if(value==null){value=new CaptureRecovery(directory,io,mode);recovery.put(mode,value);}return value;}
  public static synchronized CaptureInbox get(Context context)throws IOException{if(instance==null)instance=new CaptureInbox(context.getApplicationContext());return instance;}
  public static final class Entry {
-  public String id="",generation="",targetWorkId="",sourceHash="",imageHash="",sku="",color="",text="",mode="",message="";
-  public long createdAt;public long[] quantities=new long[4];public boolean ready,submitted,committed,photoCommitted;public int reviewVersion;
+  public String id="",generation="",targetWorkId="",sourceHash="",imageHash="",sku="",color="",text="",mode="",message="",photoAttemptId="";
+  public long createdAt;public long[] quantities=new long[4];public boolean ready,submitted,committed,photoCommitted,photoConflict,photoNeedsApproval;public int reviewVersion;
   public boolean complete(){return committed&&photoCommitted;}
  }
  private static final int MAX_ENTRIES=500,MAX_INDEX=8*1024*1024,MAX_IMAGE=8*1024*1024;
@@ -61,8 +64,10 @@ public final class CaptureInbox {
    try{photo.write(bytes);entries.add(0,e);persist(entries);return e;}catch(IOException failure){fence(failure);throw failure;}
   }
  }
- public synchronized void update(Entry replacement)throws IOException{
+ public synchronized void update(Entry replacement)throws IOException{update(replacement,false);}
+ private void update(Entry replacement,boolean relink)throws IOException{
   List<Entry> values=entries();int index=find(values,replacement.id);Entry old=values.get(index);
+  if(!relink&&!old.photoAttemptId.equals(replacement.photoAttemptId))throw new IOException("사진 전송 시도는 명시적으로 확인해야 합니다.");
   if(!immutable(old).equals(immutable(replacement)))throw new IOException("저장 사진 식별자는 변경할 수 없습니다.");
   if((old.committed&&!replacement.committed)||(old.photoCommitted&&!replacement.photoCommitted))throw new IOException("확인된 등록 상태를 되돌릴 수 없습니다.");
   if(old.submitted&&(!old.sku.equals(replacement.sku)||!old.color.equals(replacement.color)||!Arrays.equals(old.quantities,replacement.quantities)||!replacement.submitted))throw new IOException("등록 결과 확인 중에는 같은 요청을 유지해 주세요.");
@@ -83,15 +88,17 @@ public final class CaptureInbox {
    if(!request.committed&&PhotoContract.CONFLICT.equals(reply.getString("status")))request.message+=" · 원래 작업과 수량을 유지합니다.";
    update(request);if(!request.committed)return request;
   }
-  final CaptureDelivery delivery=new CaptureDelivery(directory,io,id);
+  final CaptureDelivery delivery=new CaptureDelivery(directory,io,attemptId(request));
   if(delivery.request()==null){
    if(request.photoCommitted)throw new IOException("사진 확인 기록이 없습니다. 원래 요청을 확인해 주세요.");
    byte[] bytes=photoBytes(request);
-   PhotoContract.RegisterRequest prepared=client.prepareCapture(request.id,request.generation,request.sku,request.color,bytes);
+   CaptureTarget target=client.photoTarget(request.generation,request.targetWorkId,request.sku,request.color);
+   if(!target.photoVersionId.isEmpty()){request.photoNeedsApproval=true;request.message="수량 저장 확인 · 기존 상품사진이 있습니다. 남은 사진 이어서 처리에서 사진 연결을 확인해 주세요.";update(request);return request;}
+   PhotoContract.RegisterRequest prepared=client.prepareCapture(attemptId(request),target,request.sku,request.color,bytes);
    delivery.prepare(prepared);
   }
   PhotoContract.RegisterRequest photoRequest=delivery.request();
-  if(!photoRequest.requestId.equals(request.id)||!photoRequest.generation.equals(request.generation)||!photoRequest.sku.equals(request.sku)||!photoRequest.sourceColor.equals(request.color)||!photoRequest.sourceSha256.equals(request.imageHash))throw new IOException("입고 사진의 원래 요청이 변경되었습니다.");
+  if(!photoRequest.requestId.equals(attemptId(request))||!photoRequest.generation.equals(request.generation)||!photoRequest.sku.equals(request.sku)||!photoRequest.sourceColor.equals(request.color)||!photoRequest.sourceSha256.equals(request.imageHash))throw new IOException("입고 사진의 원래 요청이 변경되었습니다.");
   if(!delivery.acknowledged()){
    request.message="1/2 수량 저장 확인 · 2/2 사진 등록 결과 확인 중";update(request);
    PhotoContract.Reply reply=delivery.deliver(new CaptureDelivery.Transport(){
@@ -99,15 +106,63 @@ public final class CaptureInbox {
     public PhotoContract.Reply register(PhotoContract.RegisterRequest r)throws IOException{return client.registerCapture(r);}
    });
    if(!delivery.acknowledged()){
-    request=entry(id);request.message="수량 저장 확인 · 사진 연결 미완료: "+reply.status+" "+(reply.reason==null?"":reply.reason)+" · 원래 사진 요청을 유지합니다.";update(request);return request;
+    request=entry(id);request.photoConflict=delivery.revisionRejected();request.message="수량 저장 확인 · 사진 연결 미완료: "+reply.status+" "+(reply.reason==null?"":reply.reason)+" · 원래 사진 요청을 유지합니다.";update(request);return request;
    }
   }
   delivery.finish(new CaptureDelivery.Completion(){
-   public void publish()throws IOException{Entry value=entry(id);value.photoCommitted=true;value.message="수량·사진 모두 유란노트 저장 확인";update(value);}
+   public void publish()throws IOException{Entry value=entry(id);value.photoCommitted=true;value.photoConflict=false;value.photoNeedsApproval=false;value.message="수량·사진 모두 유란노트 저장 확인";update(value);}
    public void cleanup(PhotoContract.RegisterRequest r)throws IOException{client.cleanupCapture(r);}
   });
   return entry(id);
  }
+
+ private static String attemptId(Entry e){return e.photoAttemptId.isEmpty()?e.id:e.photoAttemptId;}
+ private CaptureDelivery.Transport transport(PhotoClient client){return new CaptureDelivery.Transport(){
+  public PhotoContract.Reply receipt(PhotoContract.RegisterRequest r)throws IOException{return client.captureReceipt(r);}
+  public PhotoContract.Reply register(PhotoContract.RegisterRequest r)throws IOException{return client.registerCapture(r);}
+ };}
+ public static final class PhotoRetry {
+  public final String entryId,previousAttempt,sku,color,currentPhotoVersionId;
+  private final CaptureTarget target;private final boolean replacingAttempt;
+  private PhotoRetry(Entry entry,CaptureTarget target,boolean replacingAttempt){entryId=entry.id;previousAttempt=attemptId(entry);sku=entry.sku;color=entry.color;currentPhotoVersionId=target.photoVersionId;this.target=target;this.replacingAttempt=replacingAttempt;}
+ }
+ /** Returns an immutable confirmation snapshot; preparing it never registers a replacement. */
+ public synchronized PhotoRetry reviewPhotoRetry(String id,PhotoClient client)throws IOException{
+  try{return reviewPhotoRetryLocked(id,client);}catch(IOException e){fence(e);throw e;}
+ }
+ private PhotoRetry reviewPhotoRetryLocked(String id,PhotoClient client)throws IOException{
+  check();Entry entry=entry(id);CaptureDelivery old=new CaptureDelivery(directory,io,attemptId(entry));
+  if(!entry.committed||entry.photoCommitted)throw new IOException("사진 연결 상태를 먼저 확인해 주세요.");
+  boolean replacing=old.request()!=null;
+  if(replacing){
+   if(!old.revisionRejected())throw new IOException("사진 연결의 거절이 확인된 경우에만 새로 연결할 수 있습니다. 같은 등록 결과를 먼저 확인해 주세요.");
+   PhotoContract.Reply receipt=client.captureReceipt(old.request());
+   if(!PhotoContract.NOT_FOUND.equals(receipt.status)||!old.request().requestId.equals(receipt.requestId)||!entry.generation.equals(receipt.generation))throw new IOException("원래 사진의 미등록을 확인하지 못했습니다. 같은 등록 결과를 확인해 주세요.");
+  }
+  return new PhotoRetry(entry,client.photoTarget(entry.generation,entry.targetWorkId,entry.sku,entry.color),replacing);
+ }
+ /** Called only after the user confirms this photo replacing the current SKU/color photo. */
+ public synchronized Entry retryPhoto(PhotoRetry confirmation,PhotoClient client)throws IOException{
+  try{
+   Entry entry=entry(confirmation.entryId);
+   if(!entry.committed||entry.photoCommitted||!attemptId(entry).equals(confirmation.previousAttempt)||!entry.sku.equals(confirmation.sku)||!entry.color.equals(confirmation.color))throw new IOException("사진 상태가 바뀌었습니다. 다시 확인해 주세요.");
+   confirmation.target.requireSame(client.photoTarget(entry.generation,entry.targetWorkId,entry.sku,entry.color));
+   CaptureDelivery old=new CaptureDelivery(directory,io,confirmation.previousAttempt);
+   String nextId=UUID.randomUUID().toString();
+   PhotoContract.RegisterRequest next=client.prepareCapture(nextId,confirmation.target,entry.sku,entry.color,photoBytes(entry));
+   CaptureDelivery replacement=new CaptureDelivery(directory,io,nextId);
+   CaptureDelivery.Link link=attempt->{
+    Entry linked=entry(confirmation.entryId);linked.photoAttemptId=attempt;linked.photoConflict=false;linked.photoNeedsApproval=false;linked.message="수량은 이미 저장됨 · 확인한 사진 연결 대기";update(linked,true);
+   };
+   if(confirmation.replacingAttempt)old.linkReplacement(replacement,next,transport(client),link);
+   else{
+    if(old.request()!=null)throw new IOException("사진 전송 요청이 이미 생겼습니다. 같은 결과를 확인해 주세요.");
+    replacement.prepareAndLink(next,link);
+   }
+   return submitLocked(entry.id,client);
+  }catch(IOException e){fence(e);throw e;}
+ }
+
  public synchronized Entry lookupResult(String id,String summary)throws IOException{
   Entry value=entry(id);value.message=CaptureLookup.bounded(summary);update(value);return value;
  }
@@ -131,16 +186,16 @@ public final class CaptureInbox {
  private static String hash(byte[] bytes)throws IOException{try{return hex(MessageDigest.getInstance("SHA-256").digest(bytes));}catch(NoSuchAlgorithmException impossible){throw new IOException(impossible);}}
  private static String hex(byte[] bytes){StringBuilder out=new StringBuilder();for(byte b:bytes)out.append(String.format(Locale.ROOT,"%02x",b&255));return out.toString();}
  private static JSONObject json(Entry e)throws JSONException{
-  JSONObject j=new JSONObject();j.put("id",e.id);j.put("generation",e.generation);j.put("targetWorkId",e.targetWorkId);j.put("sourceHash",e.sourceHash);j.put("imageHash",e.imageHash);j.put("sku",e.sku);j.put("color",e.color);j.put("text",e.text);j.put("mode",e.mode);j.put("message",e.message);j.put("createdAt",e.createdAt);j.put("ready",e.ready);j.put("submitted",e.submitted);j.put("committed",e.committed);j.put("photoCommitted",e.photoCommitted);j.put("reviewVersion",e.reviewVersion);JSONArray q=new JSONArray();for(long n:e.quantities)q.put(n);j.put("quantities",q);return j;
+  JSONObject j=new JSONObject();j.put("id",e.id);j.put("generation",e.generation);j.put("targetWorkId",e.targetWorkId);j.put("sourceHash",e.sourceHash);j.put("imageHash",e.imageHash);j.put("sku",e.sku);j.put("color",e.color);j.put("text",e.text);j.put("mode",e.mode);j.put("message",e.message);j.put("createdAt",e.createdAt);j.put("ready",e.ready);j.put("submitted",e.submitted);j.put("committed",e.committed);j.put("photoCommitted",e.photoCommitted);j.put("photoConflict",e.photoConflict);j.put("photoNeedsApproval",e.photoNeedsApproval);j.put("photoAttemptId",e.photoAttemptId);j.put("reviewVersion",e.reviewVersion);JSONArray q=new JSONArray();for(long n:e.quantities)q.put(n);j.put("quantities",q);return j;
  }
  private static List<Entry> decode(byte[] bytes)throws IOException{
   try{
    JSONArray a=new JSONArray(new String(bytes,"UTF-8"));if(a.length()>MAX_ENTRIES)throw new IOException("보관 사진 개수 오류");List<Entry> result=new ArrayList<>();Set<String> ids=new HashSet<>();
-   for(int i=0;i<a.length();i++){JSONObject j=a.getJSONObject(i);Entry e=new Entry();e.id=j.getString("id");e.generation=j.getString("generation");e.targetWorkId=j.getString("targetWorkId");e.sourceHash=j.getString("sourceHash");e.imageHash=j.getString("imageHash");e.sku=j.getString("sku");e.color=j.getString("color");e.text=j.getString("text");e.mode=j.getString("mode");e.message=j.getString("message");e.createdAt=j.getLong("createdAt");e.ready=j.getBoolean("ready");e.submitted=j.getBoolean("submitted");e.committed=j.getBoolean("committed");e.photoCommitted=j.optBoolean("photoCommitted",false);e.reviewVersion=j.optInt("reviewVersion",0);JSONArray q=j.getJSONArray("quantities");
+   for(int i=0;i<a.length();i++){JSONObject j=a.getJSONObject(i);Entry e=new Entry();e.id=j.getString("id");e.generation=j.getString("generation");e.targetWorkId=j.getString("targetWorkId");e.sourceHash=j.getString("sourceHash");e.imageHash=j.getString("imageHash");e.sku=j.getString("sku");e.color=j.getString("color");e.text=j.getString("text");e.mode=j.getString("mode");e.message=j.getString("message");e.createdAt=j.getLong("createdAt");e.ready=j.getBoolean("ready");e.submitted=j.getBoolean("submitted");e.committed=j.getBoolean("committed");e.photoCommitted=j.optBoolean("photoCommitted",false);e.photoConflict=j.optBoolean("photoConflict",false);e.photoNeedsApproval=j.optBoolean("photoNeedsApproval",false);e.photoAttemptId=j.optString("photoAttemptId","");e.reviewVersion=j.optInt("reviewVersion",0);JSONArray q=j.getJSONArray("quantities");
     if(!e.id.matches("[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}")||!ids.add(e.id)||!e.sourceHash.matches("[0-9a-f]{64}")||!e.imageHash.matches("[0-9a-f]{64}")||e.sku.length()>80||e.color.length()>80||e.text.length()>12000||e.message.length()>12000||q.length()!=4||!(e.mode.equals("intake")||e.mode.equals("lookup"))||e.createdAt<=0)throw new IOException("보관 사진 기록 오류");
     for(int n=0;n<4;n++){e.quantities[n]=q.getLong(n);if(e.quantities[n]<0||e.quantities[n]>999999)throw new IOException("보관 수량 오류");}
     if(e.ready||e.submitted||e.committed){if(e.mode.equals("intake"))IntakeContract.fingerprint(e.generation,e.targetWorkId,e.sourceHash,e.sku,e.color,e.quantities);}
-    if(e.committed&&!e.submitted||e.photoCommitted&&!e.committed)throw new IOException("확인되지 않은 입고 완료 기록");
+    if((!e.photoAttemptId.isEmpty()&&!e.photoAttemptId.matches("[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}"))||e.committed&&!e.submitted||e.photoCommitted&&!e.committed)throw new IOException("확인되지 않은 입고 완료 기록");
     if(e.mode.equals("intake")&&!e.submitted&&e.reviewVersion<2){e.ready=false;e.message="이전 인식 사진입니다. 품번·색상·수량을 확인한 뒤 등록해 주세요.";}
     result.add(e);
    }return result;

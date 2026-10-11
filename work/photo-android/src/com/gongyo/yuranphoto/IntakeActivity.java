@@ -33,7 +33,7 @@ public final class IntakeActivity extends Activity {
   file=PhotoUi.button(root,"사진 파일 읽기",v->chooseFiles());
   resume=PhotoUi.button(root,"남은 사진 이어서 처리",v->resumeMenu());
   status=new TextView(this);status.setTextSize(16);root.addView(status);
-  setContentView(root);
+  ScrollView screen=new ScrollView(this);screen.setFillViewport(true);screen.addView(root);setContentView(screen);
   getContentResolver().registerContentObserver(Uri.parse("content://"+RuntimeIds.CAPTURE_AUTHORITY+"/inbox"),false,observer);
   work(()->{client=PhotoClient.get(getApplicationContext());inbox=CaptureInbox.get(getApplicationContext());recovery=inbox.recovery(mode);client.compatibility();return recovery.batch()==null?"카메라 또는 사진 파일로 시작하세요. 보관한 사진은 남은 사진 이어서 처리에서 확인합니다.":"이전에 선택한 사진이 남아 있습니다. 남은 사진 이어서 처리를 눌러 주세요.";});
  }
@@ -83,6 +83,8 @@ public final class IntakeActivity extends Activity {
   LinkedHashSet<Uri> unique=new LinkedHashSet<>();if(data.getClipData()!=null)for(int i=0;i<data.getClipData().getItemCount();i++)unique.add(data.getClipData().getItemAt(i).getUri());else if(data.getData()!=null)unique.add(data.getData());
   if(unique.isEmpty())return;if(unique.size()>20){status.setText("사진은 한 번에 20장까지 선택해 주세요.");return;}
   if(pendingGeneration.isEmpty()){status.setText("입고할 작업을 다시 확인한 뒤 사진을 선택해 주세요.");return;}
+  try{inbox=CaptureInbox.get(getApplicationContext());}catch(IOException failure){status.setText(failure.getMessage());return;}
+  synchronized(inbox.grantLifecycleLock()){
   Set<String> acquired=new HashSet<>();
   try{
    inbox=CaptureInbox.get(getApplicationContext());recovery=inbox.recovery(mode);
@@ -106,6 +108,7 @@ public final class IntakeActivity extends Activity {
    boolean safeToRelease=false;try{safeToRelease=recovery==null||recovery.batch()==null;}catch(IOException uncertain){}
    if(safeToRelease)for(String uri:acquired)releaseGrant(uri);
    status.setText(e.getMessage()==null?"선택한 사진을 보관하지 못했습니다. 다시 선택해 주세요.":e.getMessage());
+  }
   }
  }
  private String resumeFiles()throws Exception{return resumeFiles(mode);}
@@ -146,7 +149,7 @@ public final class IntakeActivity extends Activity {
       if(summaries.length()>0)summaries.append("\n\n");summaries.append(entry.sku).append('\n').append(entry.message);
      }
      // Saved entry identity is durable; replay no longer requires this source grant.
-     recovery.complete(owner,item.id);if(item.releaseGrant)releaseGrant(item.uri);
+     synchronized(inbox.grantLifecycleLock()){recovery.complete(owner,item.id,this::releaseGrant);}
     }catch(Exception e){
      String prefix=summaries.length()==0?"":summaries+"\n\n";
      return prefix+"처리를 멈췄습니다. 남은 사진과 원래 작업은 보관됩니다. 남은 사진 이어서 처리에서 확인하거나 남은 선택을 취소해 주세요.\n"+(e.getMessage()==null?"저장 목록을 확인해 주세요.":e.getMessage());
@@ -160,7 +163,7 @@ public final class IntakeActivity extends Activity {
  private void cancelRemaining(String selectedMode){
   new AlertDialog.Builder(this).setTitle("남은 사진 선택 취소").setMessage("아직 처리하지 않은 선택을 취소합니다. 저장된 사진과 확인 중인 입고 요청은 원래 작업으로 저장 목록에 남습니다. 원본 사진은 삭제하지 않습니다.")
    .setNegativeButton("계속 보관",null).setPositiveButton("남은 선택 취소",(dialog,which)->work(()->{
-    inbox.recovery(selectedMode).discardRemaining(this::releaseGrant);
+    synchronized(inbox.grantLifecycleLock()){inbox.recovery(selectedMode).discardRemaining(this::releaseGrant);}
     return "남은 선택을 취소했습니다. 저장된 사진은 목록에서 확인하세요.";
    })).show();
  }
@@ -177,6 +180,7 @@ public final class IntakeActivity extends Activity {
   AlertDialog.Builder builder=new AlertDialog.Builder(this).setTitle(entry.complete()?"수량·사진 저장 확인":"저장 사진 확인").setView(scroll).setNegativeButton("닫기",null);
   if(entry.mode.equals("intake"))builder.setPositiveButton(entry.complete()?"저장 결과 확인":entry.committed?"사진 연결 결과 확인":entry.submitted?"같은 등록 결과 확인":"확인한 수량 입고",null);
   else if(entry.mode.equals("lookup"))builder.setPositiveButton("현재 재고 조회",null);
+  if(entry.mode.equals("intake")&&entry.committed&&!entry.photoCommitted&&(entry.photoConflict||entry.photoNeedsApproval))builder.setNeutralButton(entry.photoNeedsApproval?"사진 연결 확인":"사진 다시 연결",null);
   AlertDialog dialog=builder.create();dialog.show();
   if(entry.mode.equals("intake"))dialog.getButton(-1).setOnClickListener(v->{
    try{
@@ -185,6 +189,23 @@ public final class IntakeActivity extends Activity {
    }catch(Exception e){note.setText(e.getMessage());}
   });
   else if(entry.mode.equals("lookup"))dialog.getButton(-1).setOnClickListener(v->work(()->{String summary=client.stockSummary(entry.sku);inbox.lookupResult(entry.id,summary);main.post(()->{if(!closed&&dialog.isShowing())note.setText(summary);});return entry.sku+"\n"+summary;}));
+  if(entry.mode.equals("intake")&&entry.committed&&!entry.photoCommitted&&(entry.photoConflict||entry.photoNeedsApproval))dialog.getButton(-3).setOnClickListener(v->work(()->{
+   CaptureInbox.PhotoRetry confirmation=inbox.reviewPhotoRetry(entry.id,client);
+   final Bitmap currentPhoto=confirmation.currentPhotoVersionId.isEmpty()?null:client.registeredPhoto(confirmation.currentPhotoVersionId);
+   final Bitmap preview;try{preview=inbox.thumbnail(entry,512);}catch(IOException failure){if(currentPhoto!=null)currentPhoto.recycle();throw failure;}
+   main.post(()->{
+    if(closed||!dialog.isShowing()){preview.recycle();if(currentPhoto!=null)currentPhoto.recycle();return;}
+    LinearLayout confirmBody=new LinearLayout(this);confirmBody.setOrientation(LinearLayout.VERTICAL);confirmBody.setPadding(24,12,24,12);
+    if(currentPhoto!=null){TextView oldTitle=new TextView(this);oldTitle.setText("현재 유란노트 사진");confirmBody.addView(oldTitle);ImageView oldPhoto=new ImageView(this);oldPhoto.setImageBitmap(currentPhoto);oldPhoto.setScaleType(ImageView.ScaleType.FIT_CENTER);confirmBody.addView(oldPhoto,new LinearLayout.LayoutParams(-1,PhotoUi.dp(confirmBody,160)));}
+    TextView newTitle=new TextView(this);newTitle.setText("연결할 저장 사진");confirmBody.addView(newTitle);
+    ImageView replacement=new ImageView(this);replacement.setImageBitmap(preview);replacement.setScaleType(ImageView.ScaleType.FIT_CENTER);confirmBody.addView(replacement,new LinearLayout.LayoutParams(-1,PhotoUi.dp(confirmBody,220)));
+    TextView message=new TextView(this);message.setText("품번 "+confirmation.sku+" · 색상 "+confirmation.color+"\n유란노트의 현재 품번·색상 사진을 위 사진으로 연결합니다. 수량은 이미 저장되어 다시 더하지 않습니다.");confirmBody.addView(message);
+    ScrollView confirmScroll=new ScrollView(this);confirmScroll.addView(confirmBody);
+    AlertDialog confirm=new AlertDialog.Builder(this).setTitle("이 사진으로 다시 연결할까요?").setView(confirmScroll).setNegativeButton("취소",null).setPositiveButton("이 사진으로 연결",(d,w)->{dialog.dismiss();work(()->{CaptureInbox.Entry result=inbox.retryPhoto(confirmation,client);return result.sku+" · "+result.message;});}).create();
+    confirm.setOnDismissListener(d->{preview.recycle();if(currentPhoto!=null)currentPhoto.recycle();});confirm.show();
+   });
+   return "사진과 품번·색상 대상을 확인해 주세요.";
+  }));
   worker.execute(()->{try{Bitmap thumbnail=inbox.thumbnail(entry,512);main.post(()->{if(dialog.isShowing()&&!closed)picture.setImageBitmap(thumbnail);else thumbnail.recycle();});}catch(IOException e){main.post(()->{if(!closed&&dialog.isShowing())note.setText(e.getMessage());});}});
  }
  private EditText field(LinearLayout body,String label,String value){TextView title=new TextView(this);title.setText(label);body.addView(title);EditText input=new EditText(this);input.setSingleLine(true);input.setText(value);input.setMinHeight(PhotoUi.dp(body,48));body.addView(input);return input;}

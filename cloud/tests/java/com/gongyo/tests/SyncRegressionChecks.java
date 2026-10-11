@@ -131,8 +131,61 @@ public final class SyncRegressionChecks {
   check(durable.get("original").equals("S: 2"),"oversized result preserves prior stored summary");
   rejected(()->CaptureLookup.publish("failed","new",(id,value)->{throw new IOException("synthetic index failure");}),"lookup cannot report a result before durable publication");
  }
+
+ private static void completeGrant(boolean uncertain)throws Exception{
+  Disk io=new Disk();try{
+   File directory=new File(io.root,"journals");CaptureRecovery recovery=new CaptureRecovery(directory,io,"intake");String uri="content://synthetic/head";
+   recovery.enqueue(GEN,PRODUCT,Collections.singletonList(uri),Collections.singleton(uri));
+   long owner=recovery.claimQueue();String id=recovery.batch().items.get(0).id;recovery.sourceHash(owner,id,HASH);recovery.saved(owner,id,ID);
+   List<String> released=new ArrayList<>();if(uncertain)io.uncertainRename=true;else io.failCreate=true;
+   rejected(()->recovery.complete(owner,id,released::add),"failed completion must keep owned grants");check(released.isEmpty(),"completion failure releases zero grants");
+   io.failCreate=false;
+   if(!uncertain)recovery.complete(owner,id,value->{try{check(new CaptureRecovery(directory,io,"intake").batch()==null,"completion is durable before release");}catch(IOException e){throw new AssertionError(e);}released.add(value);});
+   if(!uncertain)check(released.equals(Collections.singletonList(uri)),"successful completion releases owned head exactly once");
+  }finally{io.clean();}
+ }
+ private static PhotoContract.RegisterRequest retryRequest(String id,long revision){return new PhotoContract.RegisterRequest(id,GEN,revision,"","","QA123","BLACK",HASH,"content://synthetic/prepared/"+id+".input");}
+ private static CaptureDelivery.Transport rejectedRevision(){return new CaptureDelivery.Transport(){
+  public PhotoContract.Reply receipt(PhotoContract.RegisterRequest r){return new PhotoContract.Reply(PhotoContract.NOT_FOUND,r.requestId,r.generation,10,"","","","missing");}
+  public PhotoContract.Reply register(PhotoContract.RegisterRequest r){return new PhotoContract.Reply(PhotoContract.CONFLICT,r.requestId,r.generation,10,"","","","REVISION_CHANGED");}
+ };}
+ private static void replacementLink(boolean uncertain)throws Exception{
+  Disk io=new Disk();try{
+   File directory=new File(io.root,"journals");CaptureDelivery old=new CaptureDelivery(directory,io,ID);old.prepare(request(7));
+   CaptureDelivery replacement=new CaptureDelivery(directory,io,VARIANT);
+   rejected(()->old.linkReplacement(replacement,retryRequest(VARIANT,10),rejectedRevision(),id->{throw new AssertionError("unknown delivery must not replace");}),"unknown ACK cannot be replaced");
+   old.deliver(rejectedRevision());check(new CaptureDelivery(directory,io,ID).revisionRejected(),"revision rejection survives restart");
+   CheckedAtomicFile index=new CheckedAtomicFile(new File(directory,"synthetic-entry-link"),io);
+   try{index.readFully(100,b->{});}catch(CheckedAtomicFile.MissingFileException absent){}
+   index.write(ID.getBytes("UTF-8"));
+   rejected(()->old.linkReplacement(replacement,retryRequest(VARIANT,10),rejectedRevision(),id->{if(uncertain)io.uncertainRename=true;else io.failCreate=true;index.write(id.getBytes("UTF-8"));}),"entry link failure propagates");
+   io.failCreate=false;
+   if(uncertain)rejected(()->old.request(),"uncertain link fences the old attempt");
+   CaptureDelivery orphan=new CaptureDelivery(directory,io,VARIANT);check(orphan.request().revision==10&&!orphan.acknowledged(),"replacement is durable before entry link");
+   String chosen=new String(new CheckedAtomicFile(new File(directory,"synthetic-entry-link"),io).readFully(100,b->{}),"UTF-8");
+   check(chosen.equals(ID)||chosen.equals(VARIANT),"restart resolves one full attempt identity");
+   CaptureDelivery original=new CaptureDelivery(directory,io,ID);
+   check(original.request().revision==7&&PhotoContract.fingerprint(original.request()).equals(PhotoContract.fingerprint(request(7))),"replacement never mutates the old request");
+   if(chosen.equals(ID))original.linkReplacement(orphan,retryRequest(VARIANT,10),rejectedRevision(),id->{CheckedAtomicFile link=new CheckedAtomicFile(new File(directory,"synthetic-entry-link"),io);link.readFully(100,b->{});link.write(id.getBytes("UTF-8"));});
+   chosen=new String(new CheckedAtomicFile(new File(directory,"synthetic-entry-link"),io).readFully(100,b->{}),"UTF-8");
+   check(chosen.equals(VARIANT),"explicit replacement publishes the chosen attempt");
+   Remote remote=new Remote();new CaptureDelivery(directory,io,chosen).deliver(remote);check(remote.registrations==1,"only linked replacement is registered");
+   new CaptureDelivery(directory,io,chosen).deliver(remote);check(remote.registrations==1,"replacement ACK restart cannot register twice");
+  }finally{io.clean();}
+ }
+ private static void targetScope()throws Exception{
+  CaptureTarget approved=new CaptureTarget(new PhotoContract.Compatibility(1,GEN,12,24),PRODUCT);
+  approved.require(GEN,PRODUCT);
+  rejected(()->new CaptureTarget(new PhotoContract.Compatibility(1,GEN,12,24),"").require(GEN,PRODUCT),"missing or completed work must block");
+  rejected(()->new CaptureTarget(new PhotoContract.Compatibility(1,VARIANT,12,24),PRODUCT).require(GEN,PRODUCT),"changed generation must block");
+  rejected(()->new CaptureTarget(new PhotoContract.Compatibility(1,GEN,12,24),VARIANT).require(GEN,PRODUCT),"changed work must block");
+  rejected(()->approved.requireSame(new CaptureTarget(new PhotoContract.Compatibility(1,GEN,13,24),PRODUCT)),"changed revision during confirmation must block");
+  CaptureTarget photo=new CaptureTarget(new PhotoContract.Compatibility(1,GEN,12,24),PRODUCT,PRODUCT,VARIANT,HASH);
+  rejected(()->photo.requireSame(approved),"changed target photo must require a new confirmation");
+ }
+
  public static void main(String[] args)throws Exception{
-  cancellation(false);cancellation(true);successfulCancellation();deliveryRestart();ackWriteFailure(false);ackWriteFailure(true);rejectedAck();lookupIdentity();
-  System.out.println("SyncRegressionChecks passed (actual durable queue with failed, uncertain and successful discard)");
+  cancellation(false);cancellation(true);successfulCancellation();deliveryRestart();ackWriteFailure(false);ackWriteFailure(true);rejectedAck();lookupIdentity();completeGrant(false);completeGrant(true);replacementLink(false);replacementLink(true);targetScope();
+  System.out.println("SyncRegressionChecks passed (durable grants, lost ACK, immutable photo attempts, explicit replacement, frozen work, bounded lookup)");
  }
 }

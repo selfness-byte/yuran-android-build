@@ -110,12 +110,31 @@ public final class PhotoClient {
   }
  }
 
+ /** Read the active work and revision in one owner snapshot, outside the local source lock. */
+ public CaptureTarget captureTarget(String generation,String workId)throws IOException{
+  compatibility();
+  Bundle input=new Bundle();input.putInt("protocolVersion",1);Bundle reply=call("getCompatibility",input);PhotoBundleCodec.response(reply);
+  if(!PhotoContract.OK.equals(reply.getString("status")))throw new IOException("원래 입고 작업을 확인하지 못했습니다.");
+  CaptureTarget target=new CaptureTarget(PhotoBundleCodec.readCompatibility(reply),reply.getString("targetWorkId",""));
+  target.require(generation,workId);return target;
+ }
+ public CaptureTarget photoTarget(String generation,String workId,String sku,String color)throws IOException{
+  CaptureTarget scope=captureTarget(generation,workId);Bundle input=new Bundle();input.putInt("protocolVersion",1);input.putString("generation",scope.compatibility.generation);input.putLong("revision",scope.compatibility.revision);input.putString("targetWorkId",scope.workId);input.putString("sku",PhotoContract.key(sku));input.putString("sourceColor",PhotoContract.key(color));PhotoBundleCodec.request(input,"getPhotoTarget");
+  Bundle reply=call("getPhotoTarget",input);PhotoBundleCodec.response(reply);
+  if(!PhotoContract.OK.equals(reply.getString("status")))throw new IOException("사진 대상을 다시 확인해 주세요: "+reply.getString("reason",""));
+  PhotoContract.Compatibility snapshot=new PhotoContract.Compatibility(1,reply.getString("generation",""),reply.getLong("revision",-1),scope.compatibility.noteVersionCode);
+  CaptureTarget target=new CaptureTarget(snapshot,reply.getString("targetWorkId",""),reply.getString("productId",""),reply.getString("variantId",""),reply.getString("photoVersionId",""));
+  target.require(generation,workId);
+  if(snapshot.revision!=scope.compatibility.revision||!PhotoContract.key(sku).equals(reply.getString("sku",""))||!PhotoContract.key(color).equals(reply.getString("sourceColor",""))||(!target.productId.isEmpty()&&!uuid(target.productId))||(!target.variantId.isEmpty()&&(!uuid(target.variantId)||target.productId.isEmpty()))||(!target.photoVersionId.isEmpty()&&(!target.photoVersionId.matches("[0-9a-f]{64}")||target.variantId.isEmpty())))throw new IOException("사진 대상 확인 응답이 원래 작업과 다릅니다.");
+  return target;
+ }
  /** Dedicated inbox preparation; never consumes or cancels the manual registration slot. */
- public PhotoContract.RegisterRequest prepareCapture(String entryId,String generation,String sku,String color,byte[] bytes)throws IOException{
+ public PhotoContract.RegisterRequest prepareCapture(String entryId,CaptureTarget target,String sku,String color,byte[] bytes)throws IOException{
+  if(target==null||target.compatibility==null)throw new IOException("입고 작업을 다시 확인해 주세요.");
+  PhotoContract.Compatibility current=target.compatibility;
   synchronized(lock){
    ready();if(!uuid(entryId)||bytes==null||bytes.length==0||bytes.length>MAX_SOURCE_BYTES)throw new IOException("보관 사진을 확인해 주세요.");
-   PhotoContract.Compatibility current=compatibility();
-   if(!generation.equals(current.generation))throw new IOException("원래 유란노트 자료가 변경되었습니다. 사진 요청은 원래 자료에 남습니다.");
+   if(current.protocolVersion!=1||current.revision<0||target.workId.isEmpty())throw new IOException("원래 입고 작업을 확인하지 못했습니다.");
    sku=PhotoContract.key(sku);color=PhotoContract.key(color);
    if(sku.isEmpty()||sku.length()>80||color.isEmpty()||color.length()>60)throw new IOException("사진의 품번과 색상을 확인해 주세요.");
    File directory=new File(files,"prepared");CheckedAtomicFile.directory(directory,io);File raw=new File(directory,entryId+".input");
@@ -127,7 +146,7 @@ public final class PhotoClient {
     checkImage(raw);
    }catch(IOException e){fence(e);throw e;}
    String uri="content://"+RuntimeIds.CAPTURE_AUTHORITY+PhotoContract.PREPARED_SOURCE_PATH_PREFIX+entryId+PhotoContract.PREPARED_SOURCE_SUFFIX;
-   return new PhotoContract.RegisterRequest(entryId,current.generation,current.revision,"","",sku,color,hex(digest().digest(bytes)),uri);
+   return new PhotoContract.RegisterRequest(entryId,current.generation,current.revision,target.productId,target.variantId,sku,color,hex(digest().digest(bytes)),uri);
   }
  }
  public PhotoContract.Reply captureReceipt(PhotoContract.RegisterRequest request)throws IOException{
