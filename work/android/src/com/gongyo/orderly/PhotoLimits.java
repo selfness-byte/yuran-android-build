@@ -3,7 +3,7 @@ package com.gongyo.orderly;
 /** Shared bounds for the owner metadata, media, protocol and backup adapters. */
 public final class PhotoLimits {
     private PhotoLimits() {}
-    public static final int SCHEMA_VERSION=11;
+    public static final int SCHEMA_VERSION=12;
     public static final int MAX_BARCODES_PER_VARIANT=8, MAX_BARCODE_CHARS=128;
     public static final int MAX_LEGACY_BYTES=33554432, MAX_METADATA_BYTES=67108864;
     public static final int MAX_PRODUCTS=5000, MAX_VARIANTS=20000, MAX_PHOTO_ASSETS=20000;

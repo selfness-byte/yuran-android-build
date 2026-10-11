@@ -54,7 +54,7 @@ public final class InventoryRepository {
    if(!confirmed.generation.equals(expectedGeneration))return new CommitResult(false,snapshotLocked(),"GENERATION_CHANGED");
    if(confirmed.revision!=expectedRevision)return new CommitResult(false,snapshotLocked(),"REVISION_CHANGED");
    StateCodec.State candidate=copy(imported); // Validate imported receipts before discarding them.
-   candidate.generation=java.util.UUID.randomUUID().toString();candidate.catalog.receipts.clear();
+   candidate.generation=java.util.UUID.randomUUID().toString();candidate.catalog.receipts.clear();candidate.intakeReceipts.clear();
    StateCodec.State publication=copy(candidate);persistence.save(candidate);ready();confirmed=publication;
    return new CommitResult(true,snapshotLocked(),null);
   }catch(CommitUncertainException e){if(unavailable==null)unavailable=e;throw unavailable;}}
