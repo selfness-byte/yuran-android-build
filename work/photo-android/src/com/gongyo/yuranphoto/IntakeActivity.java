@@ -162,8 +162,8 @@ public final class IntakeActivity extends Activity {
     dialog.dismiss();work(()->{if(!entry.submitted)inbox.update(entry);CaptureInbox.Entry result=inbox.submit(entry.id,client);return result.sku+" · "+result.message;});
    }catch(Exception e){note.setText(e.getMessage());}
   });
-  else if(mode.equals("lookup"))dialog.getButton(-1).setOnClickListener(v->work(()->{String summary=client.stockSummary(entry.sku);entry.message=boundedSummary(summary);inbox.update(entry);main.post(()->{if(dialog.isShowing())note.setText(summary);});return entry.sku+"\n"+summary;}));
-  worker.execute(()->{try{Bitmap thumbnail=inbox.thumbnail(entry,512);main.post(()->{if(dialog.isShowing()&&!closed)picture.setImageBitmap(thumbnail);else thumbnail.recycle();});}catch(IOException e){main.post(()->{if(dialog.isShowing())note.setText(e.getMessage());});}});
+  else if(mode.equals("lookup"))dialog.getButton(-1).setOnClickListener(v->work(()->{String summary=client.stockSummary(entry.sku);entry.message=boundedSummary(summary);inbox.update(entry);main.post(()->{if(!closed&&dialog.isShowing())note.setText(summary);});return entry.sku+"\n"+summary;}));
+  worker.execute(()->{try{Bitmap thumbnail=inbox.thumbnail(entry,512);main.post(()->{if(dialog.isShowing()&&!closed)picture.setImageBitmap(thumbnail);else thumbnail.recycle();});}catch(IOException e){main.post(()->{if(!closed&&dialog.isShowing())note.setText(e.getMessage());});}});
  }
  private EditText field(LinearLayout body,String label,String value){TextView title=new TextView(this);title.setText(label);body.addView(title);EditText input=new EditText(this);input.setSingleLine(true);input.setText(value);input.setMinHeight(PhotoUi.dp(body,48));body.addView(input);return input;}
  private void beep(){try{ToneGenerator tone=new ToneGenerator(AudioManager.STREAM_MUSIC,80);tone.startTone(ToneGenerator.TONE_PROP_ACK,160);main.postDelayed(tone::release,250);}catch(RuntimeException ignored){}}
