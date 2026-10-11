@@ -66,6 +66,36 @@ public final class OcrRegressionChecks {
    String saved=LabelTextLayout.intakeText(lines(new Line("S2",0,55,30,75),new Line("M",0,80,20,100),new Line("100",24,80,60,100)));
    equal(false,IntakeText.parse(new String(saved.toCharArray())).ready);
   });
+  test("large label preserves detail within bounded decode size",()->{
+   equal(2,com.gongyo.photo.OcrReadPolicy.sampleSize(4097,3073));
+   equal(1,com.gongyo.photo.OcrReadPolicy.sampleSize(3000,1000));
+   for(int[] dimensions:new int[][]{{30000,8000},{8000,30000},{20000,12000},{4097,3073},{3000,1000},{640,480}}){
+    int sample=com.gongyo.photo.OcrReadPolicy.sampleSize(dimensions[0],dimensions[1]);
+    long width=(dimensions[0]+sample-1)/sample,height=(dimensions[1]+sample-1)/sample;
+    equal(true,width*height<=4000000L);equal(true,Math.max(width,height)<=3072);
+   }
+  });
+  test("file fallback considers all quarter turns",()->equal("[0, 90, 180, 270]",Arrays.toString(com.gongyo.photo.OcrReadPolicy.rotationAngles())));
+  test("empty first read may recover from another orientation",()->{
+   String text=com.gongyo.photo.OcrReadPolicy.selectText(Arrays.asList("",LABEL+"S2/M3"));
+   equal(true,IntakeText.parse(text).ready);quantities(IntakeText.parse(text),2,3,0,0);
+  });
+  test("conflicting rotation readings require persistent review",()->{
+   String text=com.gongyo.photo.OcrReadPolicy.selectText(Arrays.asList(LABEL+"S2/M3",LABEL+"S2/M8"));
+   equal(false,IntakeText.parse(text).ready);equal(false,IntakeText.parse(new String(text.toCharArray())).ready);
+  });
+  test("fallback cannot hide a previously unreadable size",()->{
+   String text=com.gongyo.photo.OcrReadPolicy.selectText(Arrays.asList(LABEL+"S2\nM ?",LABEL+"S2"));
+   equal(false,IntakeText.parse(text).ready);
+  });
+  test("fallback does not stitch separate count candidates",()->{
+   String text=com.gongyo.photo.OcrReadPolicy.selectText(Arrays.asList(LABEL+"S2",LABEL+"M3"));
+   IntakeText.Result result=IntakeText.parse(text);equal(false,result.ready);equal(false,result.quantities[0]==2&&result.quantities[1]==3);
+  });
+  test("duplicate recognition leaves clear result ready",()->{
+   String text=com.gongyo.photo.OcrReadPolicy.selectText(Arrays.asList(LABEL+"S2/M3",LABEL+"S2/M3"));
+   equal(true,IntakeText.parse(text).ready);quantities(IntakeText.parse(text),2,3,0,0);
+  });
   System.out.println("OCR RESULT "+passed+" passed; "+failed+" failed");
   if(failed>0)System.exit(1);
  }

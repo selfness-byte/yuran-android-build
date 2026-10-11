@@ -88,7 +88,7 @@ public final class LabelRecognition {
         } catch (IOException ignored) { /* A missing JPEG orientation does not invalidate PNG text. */ }
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inSampleSize = 1;
-        while (Math.max(bounds.outWidth, bounds.outHeight) / options.inSampleSize > 2048) options.inSampleSize *= 2;
+        options.inSampleSize = com.gongyo.photo.OcrReadPolicy.sampleSize(bounds.outWidth, bounds.outHeight);
         options.inPreferredConfig = Bitmap.Config.ARGB_8888;
         Bitmap image;
         try (InputStream input = source.open()) { image = BitmapFactory.decodeStream(input, null, options); }
