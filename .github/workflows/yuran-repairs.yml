@@ -37,3 +37,13 @@ jobs:
       - name: Compile photo Android QA app
         shell: bash
         run: env JAVA_HOME="$JAVA_HOME_17_X64" ANDROID_SDK_ROOT="$ANDROID_HOME" bash work/photo-android/build.sh outputs/yuran-photo-unsigned-qa.apk
+      - name: Sign and verify isolated QA pair
+        shell: bash
+        run: env JAVA_HOME="$JAVA_HOME_17_X64" python3 cloud/package-qa.py
+      - name: Publish installable QA download
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: yuran-qa-apks
+          path: qa-download/
+          if-no-files-found: error
+          retention-days: 14
