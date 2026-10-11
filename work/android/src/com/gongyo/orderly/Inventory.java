@@ -76,5 +76,10 @@ public final class Inventory {
         public boolean isValid() { return errors.isEmpty(); }
     }
     public static long[] totals(List<Row> rows) { long[] sums = new long[4]; for(Row row : rows) for(int i=0;i<4;i++) sums[i]+=row.quantities[i]; return sums; }
+    /** Includes every color and size for the selected product, using long totals. */
+    public static long totalForSku(List<Row> rows,String sku) {
+        String key=com.gongyo.photo.PhotoContract.key(sku);if(key.isEmpty()||rows==null)return 0;
+        long sum=0;for(Row row:rows)if(com.gongyo.photo.PhotoContract.sameKey(row.sku,key))sum+=row.total();return sum;
+    }
     public static long grandTotal(List<Row> rows) { long total=0; for(Row row : rows) total+=row.total(); return total; }
 }

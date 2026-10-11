@@ -2,6 +2,7 @@ package com.gongyo.yuranphoto;
 
 import android.os.Bundle;
 import com.gongyo.photo.PhotoContract;
+import com.gongyo.photo.IntakeText;
 import java.io.IOException;
 import java.text.Normalizer;
 import java.util.ArrayList;
@@ -20,10 +21,10 @@ import java.util.regex.Pattern;
 public final class LabelMatcher {
     private static final int MAX_CATALOG=20000, MAX_MATCHES=40, MAX_TEXT=12000;
     private static final Pattern SIZE=Pattern.compile("(?:[0-9]{1,3})?(?:XXXL|XXL|XL|XS|S|M|L)|[0-9]{2,3}");
-    private static final Pattern STYLE=Pattern.compile("EY[0-9]UTS[0-9]{3,6}");
-    private static final Pattern EXPLICIT_SKU=Pattern.compile("(?:品番|货号|貨號|款号|款號|(?<![A-Z0-9])(?:STYLE|ITEM|CODE)(?:\\s*NO\\.?)?)(?:\\s*[:：#=.-]\\s*|\\s+)([A-Z0-9][A-Z0-9._/-]{2,79})");
-    private static final Pattern EXPLICIT_COLOR=Pattern.compile("(?:颜色|顏色|色号|色號|(?<![A-Z0-9])(?:COLOR|COLOUR))(?:\\s*[:：#=.-]\\s*|\\s+)([\\p{L}\\p{N}_-]{1,30})");
-    private static final Pattern EXPLICIT_SIZE=Pattern.compile("(?:尺码|尺碼|号型|號型|尺寸|호칭|사이즈|(?<![A-Z0-9])SIZE)(?:\\s*[:：#=.-]\\s*|\\s+)([A-Z0-9/-]{1,20})");
+    private static final Pattern STYLE=Pattern.compile("EY[0-9]UTS[0-9]{3,6}(?:R[0-9]{1,3})?");
+    private static final Pattern EXPLICIT_SKU=IntakeText.SKU;
+    private static final Pattern EXPLICIT_COLOR=IntakeText.COLOR;
+    private static final Pattern EXPLICIT_SIZE=IntakeText.GARMENT_SIZE;
     private LabelMatcher() {}
 
     public static Bundle match(PhotoClient client,String text,ArrayList<String> barcodes)throws IOException {
@@ -73,7 +74,7 @@ public final class LabelMatcher {
                 int at=-1;
                 while((at=ocr.flat.indexOf(needle,at+1))>=0) {
                     int start=ocr.positions.get(at),end=ocr.positions.get(at+needle.length()-1)+1;
-                    if(!inSkuScope(start,entry.getValue(),hits,skuHits.size()==1))continue;
+                    if(IntakeText.isGarmentSpan(ocr.text,start,end)||!inSkuScope(start,entry.getValue(),hits,skuHits.size()==1))continue;
                     boolean followsSku=false;for(SkuHit hit:entry.getValue())if(hit.end==start)followsSku=true;
                     if(!leftBoundary(ocr.text,start)&&!followsSku&&!afterMarker(ocr.text,start,"颜色","顏色","色号","色號","COLOR","COLOUR"))continue;
                     String tail=tail(ocr.text,end);
@@ -110,8 +111,8 @@ public final class LabelMatcher {
         if(original.trim().isEmpty())warnings.add("글자를 읽지 못해 실제 바코드에 등록된 항목만 표시합니다.");
         if(!barcodeKeys.isEmpty()&&!ocrKeys.isEmpty()&&!barcodeKeys.equals(ocrKeys))warnings.add("바코드 등록 항목과 OCR 후보가 다릅니다. 두 근거의 후보를 함께 표시합니다. 다른 항목에 기존 바코드를 연결하지 마세요.");
         if(!barcodeKeys.isEmpty()&&!readSku.isEmpty())for(String key:barcodeKeys)if(!PhotoContract.sameKey(readSku,candidates.get(key).getString("sku"))){warnings.add("바코드에 등록된 품번과 라벨에서 읽힌 품번이 다릅니다. 실제 라벨과 등록 내용을 확인해 주세요.");break;}
-        String explicitSize=uniqueField(EXPLICIT_SIZE,ocr.text);if(!explicitSize.isEmpty())sizes.add(explicitSize);
-        if(sizes.isEmpty())for(String word:ocr.text.split("[^A-Z0-9]+"))if(isSize(word)&&word.matches("(?:[0-9]{1,3})?(?:XXXL|XXL|XL|XS|S|M|L)"))sizes.add(word);
+        String explicitSize=uniqueField(EXPLICIT_SIZE,ocr.text).replace(" ","");if(!explicitSize.isEmpty()){sizes.clear();sizes.add(explicitSize);}
+        if(sizes.isEmpty())for(String word:ocr.text.replaceAll("\\([^\\n)]*-.*?\\)","").split("[^A-Z0-9]+"))if(isSize(word)&&word.matches("(?:[0-9]{1,3})?(?:XXXL|XXL|XL|XS|S|M|L)"))sizes.add(word);
         if(sizes.size()>1)warnings.add("호칭이 여러 개 읽혔습니다. 호칭은 참고용이며 품번·색상이나 재고 수량을 바꾸지 않습니다.");
         if(!newBarcode.isEmpty())warnings.add("읽힌 바코드는 현재 미등록입니다. 후보를 선택해도 자동 등록되지 않으며 연결 내용을 따로 확인해야 합니다.");
         if(candidates.size()>MAX_MATCHES)throw tooMany();
@@ -143,6 +144,7 @@ public final class LabelMatcher {
             String key=flat(entry.getKey());if(key.isEmpty())continue;int at=-1;
             while((at=text.flat.indexOf(key,at+1))>=0) {
                 int start=text.positions.get(at),end=text.positions.get(at+key.length()-1)+1;
+                if(IntakeText.isGarmentSpan(text.text,start,end))continue;
                 if(!leftBoundary(text.text,start)&&!afterMarker(text.text,start,"品番","货号","貨號","款号","款號","STYLE","ITEM","CODE"))continue;
                 boolean valid=rightBoundary(text.text,end);String tail=tail(text.text,end);
                 if(!valid)for(Bundle row:entry.getValue())for(String alias:aliases(row)){String color=flat(alias);if(!color.isEmpty()&&tail.startsWith(color)&&(tail.length()==color.length()||isSize(tail.substring(color.length()))))valid=true;}
@@ -160,8 +162,9 @@ public final class LabelMatcher {
     }
     private static LinkedHashSet<String> suggestSkus(Ocr ocr) {
         LinkedHashSet<String> result=new LinkedHashSet<String>();Matcher explicit=EXPLICIT_SKU.matcher(ocr.text);
-        while(explicit.find()){String value=explicit.group(1);Matcher style=STYLE.matcher(value);if(style.lookingAt())value=style.group();if(value.matches(".*[A-Z].*")&&value.matches(".*[0-9].*"))result.add(value);}
-        Matcher style=STYLE.matcher(ocr.flat);while(style.find()){int start=ocr.positions.get(style.start());if(leftBoundary(ocr.text,start)||afterMarker(ocr.text,start,"品番","货号","貨號","款号","款號","STYLE","ITEM","CODE"))result.add(style.group());}return result;
+        while(explicit.find()){String value=explicit.group(1);if(value.matches(".*[A-Z].*")&&value.matches(".*[0-9].*"))result.add(value);}
+        if(!result.isEmpty())return result;
+        Matcher style=STYLE.matcher(ocr.text);while(style.find()){if(leftBoundary(ocr.text,style.start())&&rightBoundary(ocr.text,style.end()))result.add(style.group());}return result;
     }
     private static List<String> aliases(Bundle row) {LinkedHashSet<String> aliases=new LinkedHashSet<String>();aliases.add(row.getString("sourceColor",""));String values=row.getString("colorAliases","");for(String value:values.split("\\n"))if(!value.trim().isEmpty())aliases.add(value);return new ArrayList<String>(aliases);}
     private static void addCandidate(LinkedHashMap<String,Bundle> values,Bundle row,String evidence,String safeBarcode)throws IOException {String key=identity(row);Bundle candidate=values.get(key);if(candidate==null){candidate=new Bundle(row);candidate.putString("evidence",evidence);candidate.putString("safeBarcode",safeBarcode);values.put(key,candidate);}else{String existing=candidate.getString("evidence","");if(!existing.contains(evidence))candidate.putString("evidence",existing+" · "+evidence);if(candidate.getString("safeBarcode","").isEmpty()&&!safeBarcode.isEmpty())candidate.putString("safeBarcode",safeBarcode);}if(values.size()>MAX_MATCHES)throw tooMany();}

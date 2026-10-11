@@ -41,9 +41,9 @@ public final class LabelRecognition {
         TextRecognizer recognizer = null;
         Task<Text> task = null;
         try {
-            ArrayList<String> barcodes = readBarcodes(bitmap);
             recognizer = TextRecognition.getClient(new ChineseTextRecognizerOptions.Builder().build());
             task = recognizer.process(InputImage.fromBitmap(bitmap, 0));
+            ArrayList<String> barcodes = readBarcodes(bitmap);
             Text recognized = Tasks.await(task, 40, TimeUnit.SECONDS);
             String text = recognized.getText();
             if (text.length() > MAX_TEXT) throw new IOException("라벨의 글자가 너무 많습니다. 상품 라벨만 가까이 촬영해 주세요.");
