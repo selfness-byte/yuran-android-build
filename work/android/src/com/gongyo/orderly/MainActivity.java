@@ -1145,6 +1145,13 @@ public final class MainActivity extends Activity {
         else executeExport(frozen);
     }
     private void executeExport(ExportSnapshot frozen){
+        if(!"xlsx".equals(frozen.format)){executeExportContents(frozen);return;}
+        try{
+            MediaSource source=store.exportMedia(repository,exportMediaStore,frozen);source.checkReady();
+            FrozenExportPreview.show(this,frozen,source,()->executeExportContents(frozen),()->clearFrozenExport(frozen));
+        }catch(Exception failure){storageFailure(failure);alert("사진 미리보기 오류",failure.getMessage());}
+    }
+    private void executeExportContents(ExportSnapshot frozen){
         try{
             MediaSource source=store.exportMedia(repository,exportMediaStore,frozen);source.checkReady();
             String route=frozen.options.get("route");
