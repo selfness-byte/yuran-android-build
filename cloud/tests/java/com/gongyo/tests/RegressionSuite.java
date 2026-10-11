@@ -183,6 +183,8 @@ public final class RegressionSuite {
    equal(false,gate.observe("QA200",1700));equal(false,gate.observe("QA200",1999));equal(true,gate.observe("QA200",2000));
   });
   test("explicit product and color digits are not quantities",()->{Object r=intake("STYLE: M123\nCOLOR: M3\nS2");equal(true,field(r,"ready"));quantities(r,2,0,0,0);});
+  test("quantity annotation after color cannot be hidden in color span",()->{equal(false,field(intake("STYLE: QA100\nCOLOR: BLUE M3/4\nS2"),"ready"));equal(false,field(intake("STYLE: QA100\nCOLOR: BLUE M3\nS2"),"ready"));});
+  test("unreadable explicit size count blocks partial intake",()->{for(String value:new String[]{"M: ?","M:","M ?","M"})equal(false,field(intake("STYLE: QA100\nCOLOR: BLUE\nS2\n"+value),"ready"));});
   System.out.println("RESULT "+passed+" passed; "+failed+" failed");
   if(failed>0)System.exit(1);
  }
