@@ -35,43 +35,73 @@ public final class LabelRecognition {
     }
     private LabelRecognition() {}
 
-    /** Call on a worker; the bundled Chinese recognizer also reads Latin label text. */
+    /** Native OCR could not finish. Retaining callers must independently decode the picture first. */
+    public static final class OcrException extends IOException {
+        private static final long serialVersionUID = 1L;
+        public OcrException(String message) { super(message); }
+        public OcrException(String message, Throwable cause) { super(message, cause); }
+    }
+    private static final java.util.concurrent.atomic.AtomicBoolean FILE_READING =
+            new java.util.concurrent.atomic.AtomicBoolean();
+    private static final long READ_BUDGET_NANOS = TimeUnit.SECONDS.toNanos(12);
+
+    /** Call on a worker; retain the existing bundled Chinese/Latin model compatibility. */
     public static Result read(Context context, Source source) throws IOException { return read(context,source,true); }
     public static Result readText(Context context, Source source) throws IOException { return read(context,source,false); }
     private static Result read(Context context, Source source,boolean scanBarcodes) throws IOException {
-        Bitmap bitmap = decode(source);
+        // A timed-out native task keeps this gate until its completion callback releases its bitmap.
+        if (!FILE_READING.compareAndSet(false,true))
+            throw new OcrException("이전 사진 읽기가 아직 끝나지 않았습니다. 사진을 직접 확인해 주세요.");
+        final Bitmap bitmap;
+        try { bitmap=decode(source); }
+        catch (IOException | RuntimeException | Error failure) { FILE_READING.set(false);throw failure; }
         TextRecognizer recognizer = null;
         Task<Text> task = null;
+        long deadline=System.nanoTime()+READ_BUDGET_NANOS;
         try {
             recognizer = TextRecognition.getClient(new ChineseTextRecognizerOptions.Builder().build());
-            task = recognizer.process(InputImage.fromBitmap(bitmap, 0));
-            ArrayList<String> barcodes = scanBarcodes?readBarcodes(bitmap):new ArrayList<>();
-            Text recognized = Tasks.await(task, 40, TimeUnit.SECONDS);
-            String text = intakeText(recognized);
-            if (text.length() > MAX_TEXT) throw new IOException("라벨의 글자가 너무 많습니다. 상품 라벨만 가까이 촬영해 주세요.");
-            if (text.trim().isEmpty() && barcodes.isEmpty()) throw new IOException("라벨의 글자와 바코드를 읽지 못했습니다. 초점을 맞춰 다시 촬영해 주세요.");
-            return new Result(text, barcodes);
+            ArrayList<String> barcodes=new ArrayList<>();
+            ArrayList<String> candidates=new ArrayList<>();
+            for(int angle:com.gongyo.photo.OcrReadPolicy.rotationAngles()){
+                long remaining=deadline-System.nanoTime();
+                if(remaining<=0)throw new java.util.concurrent.TimeoutException();
+                task=recognizer.process(InputImage.fromBitmap(bitmap,angle));
+                if(scanBarcodes&&angle==0)barcodes=readBarcodes(bitmap);
+                remaining=deadline-System.nanoTime();
+                if(remaining<=0)throw new java.util.concurrent.TimeoutException();
+                Text recognized=Tasks.await(task,remaining,TimeUnit.NANOSECONDS);
+                String text=intakeText(recognized);
+                if(text.length()>MAX_TEXT)
+                    throw new OcrException("라벨의 글자가 너무 많습니다. 상품 라벨만 가까이 촬영해 주세요.");
+                candidates.add(text);
+                // A clear first pass remains fast; only incomplete file reads try another orientation.
+                if(scanBarcodes?(!text.trim().isEmpty()||!barcodes.isEmpty()):com.gongyo.photo.IntakeText.parse(text).ready)break;
+            }
+            String text=com.gongyo.photo.OcrReadPolicy.selectText(candidates);
+            if(text.length()>MAX_TEXT)
+                throw new OcrException("라벨의 글자가 너무 많습니다. 상품 라벨만 가까이 촬영해 주세요.");
+            if(text.trim().isEmpty()&&barcodes.isEmpty())
+                throw new OcrException("라벨의 글자와 바코드를 읽지 못했습니다. 사진을 직접 확인해 주세요.");
+            return new Result(text,barcodes);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new IOException("라벨 읽기가 중단됐습니다. 다시 촬영해 주세요.", e);
+            throw new IOException("라벨 읽기가 중단됐습니다. 다시 촬영해 주세요.",e);
         } catch (java.util.concurrent.TimeoutException e) {
-            throw new IOException("라벨 읽기가 오래 걸립니다. 다시 읽거나 촬영해 주세요.", e);
+            throw new OcrException("라벨 읽기 시간이 초과됐습니다. 사진을 직접 확인해 주세요.",e);
         } catch (java.util.concurrent.ExecutionException | RuntimeException e) {
-            throw new IOException("라벨을 읽지 못했습니다. 다시 촬영하거나 새로운 등록에서 직접 입력해 주세요.", e);
+            throw new OcrException("라벨을 읽지 못했습니다. 사진을 직접 확인해 주세요.",e);
         } finally {
-            final Bitmap ownedBitmap = bitmap;
-            final TextRecognizer ownedRecognizer = recognizer;
-            if (task != null && !task.isComplete()) {
-                // A timed-out native request still owns its input until it completes.
-                task.addOnCompleteListener(Runnable::run, ignored -> {
-                    if (ownedRecognizer != null) ownedRecognizer.close();
-                    ownedBitmap.recycle();
-                });
-            } else {
-                if (ownedRecognizer != null) ownedRecognizer.close();
-                ownedBitmap.recycle();
-            }
+            final TextRecognizer ownedRecognizer=recognizer;
+            if(task!=null&&!task.isComplete()){
+                // InputImage rotations share this bitmap; no fallback bitmap may be released early.
+                task.addOnCompleteListener(Runnable::run,ignored->releaseFileRead(bitmap,ownedRecognizer));
+            }else releaseFileRead(bitmap,ownedRecognizer);
         }
+    }
+
+    private static void releaseFileRead(Bitmap bitmap,TextRecognizer recognizer){
+        try { if(recognizer!=null)recognizer.close(); }
+        finally { try { bitmap.recycle(); } finally { FILE_READING.set(false); } }
     }
 
     static Bitmap decode(Source source) throws IOException {
@@ -87,7 +117,6 @@ public final class LabelRecognition {
             orientation = new ExifInterface(input).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
         } catch (IOException ignored) { /* A missing JPEG orientation does not invalidate PNG text. */ }
         BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inSampleSize = 1;
         options.inSampleSize = com.gongyo.photo.OcrReadPolicy.sampleSize(bounds.outWidth, bounds.outHeight);
         options.inPreferredConfig = Bitmap.Config.ARGB_8888;
         Bitmap image;

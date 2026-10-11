@@ -87,8 +87,10 @@ public final class CaptureRecovery {
  public interface GrantReleaser { void release(String uri); }
  /** Keeps cancellation and owned-grant release under the same queue lock. */
  public synchronized void discardRemaining(GrantReleaser releaser)throws IOException{
-  for(Item item:remainingForDiscard())if(item.releaseGrant)releaser.release(item.uri);
-  discardRemaining();
+  for(Item item:discardRemaining())if(item.releaseGrant)releaser.release(item.uri);
+ }
+ public synchronized void complete(long owner,String id,GrantReleaser releaser)throws IOException{
+  Item item=head(owner,id);complete(owner,id);if(item.releaseGrant)releaser.release(item.uri);
  }
  public synchronized List<Item> remainingForDiscard()throws IOException{
   check();if(queueOwner!=0)throw new IOException("사진 처리가 진행 중입니다.");return batch==null?Collections.emptyList():new ArrayList<>(batch.items);
