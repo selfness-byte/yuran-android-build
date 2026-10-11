@@ -10,6 +10,8 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.RippleDrawable;
+import android.graphics.drawable.StateListDrawable;
 import android.net.Uri;
 import android.text.*;
 import android.view.*;
@@ -21,7 +23,7 @@ import java.util.*;
 
 /** Single-activity, offline order sheet editor. No network or storage permissions. */
 public final class MainActivity extends Activity {
-    private static final int INK=0xff153e3a, TEAL=0xff17786b, BRAND_PINK=0xffff80ab, BG=0xfff4f6f2, MUTED=0xff647570, LINE=0xffdce5df, AMBER=0xff955c18;
+    private static final int INK=0xff18283f, ACCENT=0xff795719, BRAND_GOLD=0xffebcd83, BG=0xfffbf8f1, MUTED=0xff596473, LINE=0xffe6dac2, AMBER=0xff955c18;
     private static final int FIRST_DOCUMENT_REQUEST=1024, LAST_DOCUMENT_REQUEST=65535;
     // Never recycle an outstanding request code in this process; restore its high water mark too.
     private static int nextDocumentRequest=FIRST_DOCUMENT_REQUEST;
@@ -128,7 +130,7 @@ public final class MainActivity extends Activity {
         if(phase.equals("CONFLICT"))progress.addView(sessionButton("복원 준비 취소 · 입력 폐기 후 최신 자료 보기",()->new AlertDialog.Builder(this).setTitle("입력과 복원 준비 취소").setMessage("현재 미저장 입력과 복원 준비를 취소하고 최신 자료를 볼까요?").setPositiveButton("취소 후 최신 자료 보기",(d,w)->backupSession.cancel(this,backupSession.operation,true)).setNegativeButton("입력 유지",null).show()));
         if(!storageUnavailable&&!phase.equals("LOADING")&&!phase.equals("COMMITTING")&&!phase.equals("BACKUP_WRITING")&&!phase.equals("CONFLICT"))progress.addView(sessionButton("준비 취소",()->backupSession.cancel(this,backupSession.operation,false)));setContentView(progress);
     }
-    private Button sessionButton(String label,Runnable action){Button button=new Button(this);button.setText(label);button.setOnClickListener(v->action.run());return button;}
+    private Button sessionButton(String label,Runnable action){return button(label,false,action);}
     private void showRestoreConfirmation(long id){if(!backupSession.attached(this,id)||backupSession.busy||backupSession.prepared==null||backupSession.cancelRequested||!(backupSession.phase.equals("PREPARED")||backupSession.phase.equals("FAILED_PREPARED")))return;if(restoreConfirmation!=null&&confirmationOperation==id)return;StateCodec.State imported=backupSession.prepared.stateCopy;confirmationOperation=id;restoreConfirmation=new AlertDialog.Builder(this).setTitle(backupSession.failure==null?"백업 자료 복원":"복원 실패 · 준비 보존").setMessage((backupSession.failure==null?"":backupSession.failure.getMessage()+"\n\n")+"보관 작업 "+imported.jobs.size()+"개와 색상 규칙을 불러옵니다. 현재 자료 전체를 백업 시점으로 교체합니다. 필요한 자료는 먼저 전체 백업해 주세요.").setPositiveButton("교체하여 복원",(d,w)->{restoreConfirmation=null;backupSession.commit(this,id);}).setNegativeButton("취소",(d,w)->{restoreConfirmation=null;backupSession.cancel(this,id,false);}).setOnCancelListener(d->{restoreConfirmation=null;backupSession.cancel(this,id,false);}).create();restoreConfirmation.show();}
     private void backupSessionChanged(BackupRestoreSession session,long id){if(backupSession!=session||!session.attached(this,id))return;repository=session.repository;store=session.store;exportMediaStore=session.media;if(session.blocked()){if(session.kind.equals("restore")){pendingExport=session.recoveredExport;pendingBackup=session.pendingBackup;pendingBackupAt=session.pendingBackupAt;}if(session.kind.equals("backup")&&session.pendingBackup!=null){pendingBackup=session.pendingBackup;pendingBackupAt=session.pendingBackupAt;exportKind="backup";}showBackupProgress();if(session.phase.equals("PREPARED")||session.phase.equals("FAILED_PREPARED")){if(session.failure!=null)storageFailure(session.failure);if(!storageUnavailable)showRestoreConfirmation(id);}if(session.phase.equals("BACKUP_READY")||session.phase.equals("RESTORE_READY")){int request=session.issuePicker(this,id);if(request>=0){Intent picker=new Intent(session.kind.equals("backup")?Intent.ACTION_CREATE_DOCUMENT:Intent.ACTION_OPEN_DOCUMENT);picker.addCategory(Intent.CATEGORY_OPENABLE);picker.setType(session.kind.equals("backup")?"application/octet-stream":"*/*");if(session.kind.equals("backup")){picker.putExtra(Intent.EXTRA_TITLE,backupFileName(session.pendingBackupAt));documentRequest=request;documentExportToken="backup@"+session.pendingBackupAt;documentPendingFingerprint=session.fingerprint;}try{startActivityForResult(picker,request);}catch(ActivityNotFoundException failure){session.pickerFailed(failure);}}}return;}
         if(!session.takeTerminal(this,id))return;pendingBackup=session.pendingBackup;pendingBackupAt=session.pendingBackupAt;if(session.kind.equals("load")){pendingExport=session.recoveredExport;exportKind=pendingExport!=null?pendingExport.options.get("route"):pendingBackup!=null?"backup":null;}else if(session.kind.equals("restore")){pendingExport=session.recoveredExport;pendingBackup=session.pendingBackup;pendingBackupAt=session.pendingBackupAt;}else if(session.kind.equals("backup")){exportKind=pendingBackup==null?null:"backup";documentRequest=-1;documentExportToken=null;documentPendingFingerprint=null;}
@@ -232,11 +234,18 @@ public final class MainActivity extends Activity {
     private GradientDrawable background(int color,int border,int radius){GradientDrawable g=new GradientDrawable();g.setColor(color);g.setCornerRadius(dp(radius));if(border!=0)g.setStroke(dp(1),border);return g;}
     private LinearLayout vertical(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.VERTICAL);return l;}
     private void space(LinearLayout layout,int height){View v=new View(this);layout.addView(v,new LinearLayout.LayoutParams(1,dp(height)));}
-    private LinearLayout card(){LinearLayout c=vertical();c.setPadding(dp(17),dp(17),dp(17),dp(17));c.setBackground(background(Color.WHITE,LINE,16));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.bottomMargin=dp(12);body.addView(c,lp);return c;}
-    private Button button(String label,boolean primary,Runnable run){Button b=new Button(this);b.setText(label);b.setTextSize(15);b.setAllCaps(false);b.setTypeface(Typeface.DEFAULT,Typeface.BOLD);b.setTextColor(primary?Color.WHITE:INK);b.setBackground(background(primary?TEAL:0xffeaf0eb,0,12));b.setMinHeight(dp(48));b.setMinimumHeight(dp(48));b.setPadding(dp(8),dp(8),dp(8),dp(8));b.setOnClickListener(v->run.run());return b;}
+    private LinearLayout card(){LinearLayout c=vertical();c.setPadding(dp(17),dp(17),dp(17),dp(17));c.setBackground(background(0xfffffefa,LINE,22));c.setElevation(dp(2));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.bottomMargin=dp(12);body.addView(c,lp);return c;}
+    private Button button(String label,boolean primary,Runnable run){
+        Button b=new Button(this);b.setText(label);b.setTextSize(15);b.setAllCaps(false);b.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
+        b.setTextColor(new ColorStateList(new int[][]{new int[]{-android.R.attr.state_enabled},new int[]{}},new int[]{MUTED,INK}));
+        GradientDrawable gold=new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xfff4e3b5,0xffdcc17f});gold.setCornerRadius(dp(16));gold.setStroke(dp(1),0xffc9a85b);
+        StateListDrawable fill=new StateListDrawable();fill.addState(new int[]{-android.R.attr.state_enabled},background(0xffe8e4db,LINE,16));fill.addState(new int[]{android.R.attr.state_focused},background(0xffecd598,INK,16));fill.addState(new int[]{},primary?gold:background(0xfff5eee0,LINE,16));
+        b.setBackgroundTintList(null);b.setBackground(new RippleDrawable(ColorStateList.valueOf(0x2418283f),fill,background(Color.WHITE,0,16)));
+        b.setMinHeight(dp(48));b.setMinimumHeight(dp(48));b.setPadding(dp(10),dp(10),dp(10),dp(10));b.setOnClickListener(v->run.run());return b;
+    }
     private void fullButton(LinearLayout parent,String label,boolean primary,Runnable run){LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.topMargin=dp(10);parent.addView(button(label,primary,run),lp);}
     private void buttons(LinearLayout parent,String[] names,boolean firstPrimary,Runnable... runs){LinearLayout row=new LinearLayout(this);row.setGravity(Gravity.CENTER_VERTICAL);for(int i=0;i<names.length;i++){LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,-2,1);if(i>0)lp.leftMargin=dp(8);row.addView(button(names[i],firstPrimary&&i==0,runs[i]),lp);}LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.topMargin=dp(10);parent.addView(row,lp);}
-    private EditText input(LinearLayout parent,String label,String value,boolean multiline){parent.addView(text(label,13,MUTED));EditText e=new EditText(this);e.setText(value);e.setTextSize(16);e.setTextColor(INK);e.setHintTextColor(0xff89958f);e.setPadding(dp(12),dp(10),dp(12),dp(10));e.setBackground(background(BG,LINE,9));e.setSelectAllOnFocus(false);e.setSingleLine(!multiline);e.setInputType(android.text.InputType.TYPE_CLASS_TEXT|(multiline?android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE:0)|android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.topMargin=dp(6);lp.bottomMargin=dp(13);parent.addView(e,lp);return e;}
+    private EditText input(LinearLayout parent,String label,String value,boolean multiline){parent.addView(text(label,13,MUTED));EditText e=new EditText(this);e.setText(value);e.setTextSize(16);e.setTextColor(INK);e.setHintTextColor(MUTED);e.setPadding(dp(12),dp(10),dp(12),dp(10));e.setBackground(background(BG,LINE,12));e.setMinHeight(dp(48));e.setSelectAllOnFocus(false);e.setSingleLine(!multiline);e.setInputType(android.text.InputType.TYPE_CLASS_TEXT|(multiline?android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE:0)|android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.topMargin=dp(6);lp.bottomMargin=dp(13);parent.addView(e,lp);return e;}
     private void capture(){
         if(!ready||backupBlocked()||transitioning||state.draft.completed)return;
         if(titleInput!=null)state.draft.title=titleInput.getText().toString();
@@ -352,25 +361,25 @@ public final class MainActivity extends Activity {
         titleInput=null;sourceInput=null;
         root=vertical();root.setBackgroundColor(BG);
         LinearLayout header=vertical();header.setPadding(dp(22),dp(19),dp(22),dp(18));header.setBackgroundColor(INK);
-        TextView micro=text("QUANTITY NOTE   ·   OFFLINE",11,0xffb4d6c9);micro.setLetterSpacing(.12f);header.addView(micro);
-        TextView brand=text("유란노트",28,BRAND_PINK);brand.setTypeface(Typeface.DEFAULT,Typeface.BOLD);header.addView(brand);
-        header.addView(text("붙여넣고, 확인하고, 한 장으로.",14,0xffd8e7df));root.addView(header);
+        TextView micro=text("QUANTITY NOTE   ·   OFFLINE",11,0xffe3d2aa);micro.setLetterSpacing(.12f);header.addView(micro);
+        TextView brand=text("유란노트",28,BRAND_GOLD);brand.setTypeface(Typeface.DEFAULT,Typeface.BOLD);header.addView(brand);
+        header.addView(text("붙여넣고, 확인하고, 한 장으로.",14,0xffe9e2d3));root.addView(header);
         ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);body=vertical();body.setPadding(dp(16),dp(18),dp(16),dp(20));scroll.addView(body);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         if(conflicted){LinearLayout warning=card();warning.addView(text("저장 안 됨 · 다른 화면에서 자료가 변경되었습니다. 입력을 보존했습니다.",14,AMBER));fullButton(warning,"입력 유지 또는 최신 자료 보기",false,()->showConflictNotice());}
         if(tab==0)showInput();else if(tab==1)showTable();else if(tab==2)showHistory();else if(tab==3)showRules();else showChanges();
-        LinearLayout nav=new LinearLayout(this);nav.setPadding(dp(6),dp(6),dp(6),dp(8));nav.setBackgroundColor(Color.WHITE);String[] labels={"입력","정리표","보관함","색상 규칙","변경 내역"};
-        for(int i=0;i<labels.length;i++){final int n=i;Button b=button(labels[i],tab==i,()->navigate(n));b.setTextSize(12);b.setMinWidth(0);b.setMinimumWidth(0);b.setPadding(dp(3),dp(7),dp(3),dp(7));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(52),1);lp.setMargins(dp(2),0,dp(2),0);nav.addView(b,lp);}showStockFooter();root.addView(nav);setContentView(root);
+        LinearLayout nav=new LinearLayout(this);nav.setPadding(dp(6),dp(6),dp(6),dp(8));nav.setBackgroundColor(0xfffffefa);String[] labels={"입력","정리표","보관함","색상 규칙","변경 내역"};
+        for(int i=0;i<labels.length;i++){final int n=i;Button b=button(labels[i],tab==i,()->navigate(n));b.setTextSize(12);b.setMinWidth(0);b.setMinimumWidth(0);b.setPadding(dp(3),dp(7),dp(3),dp(7));b.setMinHeight(dp(52));b.setMinimumHeight(dp(52));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,-2,1);lp.setMargins(dp(2),0,dp(2),0);nav.addView(b,lp);}showStockFooter();root.addView(nav);setContentView(root);
     }
     private String quantityText(long value){return String.format(Locale.KOREA,"%,d",value)+"개";}
     private String stockDelta(long initial,long remaining){if(initial<0)return "—";long delta=remaining-initial;return (delta>0?"+":"")+quantityText(delta);}
     private void showStockFooter(){
         Inventory.Job job=state.draft;boolean active=job.hasCurrentTable();long remaining=Inventory.grandTotal(job.rows);
-        LinearLayout footer=new LinearLayout(this);footer.setTag("stock-footer");footer.setGravity(Gravity.CENTER_VERTICAL);footer.setPadding(dp(10),dp(9),dp(12),dp(9));footer.setBackground(background(0xffeaf3ed,LINE,0));
+        LinearLayout footer=new LinearLayout(this);footer.setTag("stock-footer");footer.setGravity(Gravity.CENTER_VERTICAL);footer.setPadding(dp(10),dp(9),dp(12),dp(9));footer.setBackground(background(0xfff3ead8,LINE,0));
         LinearLayout details=vertical();footer.addView(details,new LinearLayout.LayoutParams(-1,-2));
         TextView label=heading("작업별 재고 · 기록 보기  ›",13);details.addView(label);space(details,4);
         LinearLayout values=new LinearLayout(this);String[] names={"최초 수량","변동","남은 재고"},tags={"stock-initial","stock-delta","stock-remaining"};
         String[] numbers={active?(job.initialQuantity<0?"기록 없음":quantityText(job.initialQuantity)):"—",active?stockDelta(job.initialQuantity,remaining):"—",active?quantityText(remaining):"—"};
-        for(int i=0;i<3;i++){LinearLayout cell=vertical();cell.addView(text(names[i],11,MUTED));TextView amount=heading(numbers[i],i==2?21:17);amount.setTag(tags[i]);amount.setTextColor(i==2?TEAL:INK);amount.setSingleLine();amount.setAutoSizeTextTypeUniformWithConfiguration(11,i==2?21:17,1,android.util.TypedValue.COMPLEX_UNIT_SP);cell.addView(amount,new LinearLayout.LayoutParams(-1,dp(28)));values.addView(cell,new LinearLayout.LayoutParams(0,-2,1));}details.addView(values);
+        for(int i=0;i<3;i++){LinearLayout cell=vertical();cell.addView(text(names[i],11,MUTED));TextView amount=heading(numbers[i],i==2?21:17);amount.setTag(tags[i]);amount.setTextColor(i==2?ACCENT:INK);amount.setSingleLine();amount.setAutoSizeTextTypeUniformWithConfiguration(11,i==2?21:17,1,android.util.TypedValue.COMPLEX_UNIT_SP);cell.addView(amount,new LinearLayout.LayoutParams(-1,dp(28)));values.addView(cell,new LinearLayout.LayoutParams(0,-2,1));}details.addView(values);
         TextView time=text(active?"마지막 수량 변경: "+TimeLabels.format(job.stockUpdatedAt):"새 작업 · 목록을 정리하면 수량이 기록됩니다.",11,MUTED);time.setTag("stock-updated");details.addView(time);
         String previous=state.stockHistory.isEmpty()?"새 작업의 재고는 별도로 계산합니다.":"직전 작업 마지막 재고: "+quantityText(state.stockHistory.get(0).finalQuantity);
         TextView previousView=text(previous,11,INK);previousView.setTag("stock-previous");details.addView(previousView);
@@ -594,7 +603,7 @@ public final class MainActivity extends Activity {
         for(Inventory.Row row:visibleRows){
             final int index=state.draft.rows.indexOf(row);LinearLayout c=card();if(unresolved(row))c.setBackground(background(0xfffff7e8,0xffe8cf9f,14));
             PhotoCatalog.Binding displayPhoto=PhotoBindings.displayBinding(state,row);
-            LinearLayout head=new LinearLayout(this);head.setGravity(Gravity.CENTER_VERTICAL);TextView sku=heading(row.sku,18);head.addView(sku,new LinearLayout.LayoutParams(0,-2,1));head.addView(rowPhotoThumbnail(row,displayPhoto));TextView code=heading(row.color,17);code.setTextColor(unresolved(row)?AMBER:TEAL);head.addView(code);c.addView(head);space(c,4);c.addView(text(row.sourceColor+"   ·   "+(index+1)+"번째 행   ·   눌러서 수정",12,MUTED));space(c,13);quantityStrip(c,row.quantities,row.total(),false,true);
+            LinearLayout head=new LinearLayout(this);head.setGravity(Gravity.CENTER_VERTICAL);TextView sku=heading(row.sku,18);head.addView(sku,new LinearLayout.LayoutParams(0,-2,1));head.addView(rowPhotoThumbnail(row,displayPhoto));TextView code=heading(row.color,17);code.setTextColor(unresolved(row)?AMBER:ACCENT);head.addView(code);c.addView(head);space(c,4);c.addView(text(row.sourceColor+"   ·   "+(index+1)+"번째 행   ·   눌러서 수정",12,MUTED));space(c,13);quantityStrip(c,row.quantities,row.total(),false,true);
             TextView photoStatus=text(row.binding!=null&&row.binding.needsConfirmation?"사진 재확인 필요":displayPhoto==null?"사진 미등록 · 등록 사진 또는 연결을 확인하세요":row.binding==null?"등록 사진 표시 중":"사진 연결됨",13,row.binding!=null&&row.binding.needsConfirmation?AMBER:MUTED);c.addView(photoStatus);
             Button photo=button("사진 연결 확인",false,()->showPhotoBinding(index));photo.setTag("photo-binding-"+row.rowId);photo.setEnabled(!state.draft.completed);c.addView(photo);
             c.setOnClickListener(v->editRow(index));c.setContentDescription(row.sku+" "+row.color+" 합계 "+row.total()+". 눌러서 수정");
@@ -669,7 +678,7 @@ public final class MainActivity extends Activity {
     private void showQuickAdjustment(){
         if(state.draft.completed){LinearLayout locked=card();locked.addView(heading("수량 바로 조정 · 잠김",17));locked.addView(text("완료 취소 후 수량을 변경할 수 있습니다.",13,MUTED));return;}
         if(quickSkuValue.isEmpty()&&!state.draft.rows.isEmpty()){quickSkuValue=state.draft.rows.get(0).sku;quickColorValue=state.draft.rows.get(0).color;}
-        LinearLayout c=card();LinearLayout quickHeader=new LinearLayout(this);quickHeader.setGravity(Gravity.CENTER_VERTICAL);quickHeader.addView(heading("수량 바로 조정",20),new LinearLayout.LayoutParams(0,-2,1));quickSkuTotal=text("",15,TEAL);quickSkuTotal.setGravity(Gravity.END);quickSkuTotal.setPadding(dp(8),0,0,0);quickHeader.addView(quickSkuTotal,new LinearLayout.LayoutParams(-2,-2));c.addView(quickHeader);space(c,5);c.addView(text("품번과 색상을 선택한 뒤 수량을 더하거나 빼세요.",13,MUTED));space(c,12);
+        LinearLayout c=card();LinearLayout quickHeader=new LinearLayout(this);quickHeader.setGravity(Gravity.CENTER_VERTICAL);quickHeader.addView(heading("수량 바로 조정",20),new LinearLayout.LayoutParams(0,-2,1));quickSkuTotal=text("",15,ACCENT);quickSkuTotal.setGravity(Gravity.END);quickSkuTotal.setPadding(dp(8),0,0,0);quickHeader.addView(quickSkuTotal,new LinearLayout.LayoutParams(-2,-2));c.addView(quickHeader);space(c,5);c.addView(text("품번과 색상을 선택한 뒤 수량을 더하거나 빼세요.",13,MUTED));space(c,12);
         LinearLayout selectors=new LinearLayout(this);LinearLayout skuBox=vertical(),colorBox=vertical();
         selectors.addView(skuBox,new LinearLayout.LayoutParams(0,-2,1.5f));LinearLayout.LayoutParams colorLP=new LinearLayout.LayoutParams(0,-2,1);colorLP.leftMargin=dp(8);selectors.addView(colorBox,colorLP);c.addView(selectors);
         quickSku=menuInput(skuBox,"품번",quickSkuValue);quickColor=menuInput(colorBox,"색상 코드",quickColorValue);
@@ -678,10 +687,10 @@ public final class MainActivity extends Activity {
         numbers.addView(sizeBox,new LinearLayout.LayoutParams(0,-2,1));LinearLayout.LayoutParams qtyLP=new LinearLayout.LayoutParams(0,-2,1.5f);qtyLP.leftMargin=dp(8);numbers.addView(qtyBox,qtyLP);c.addView(numbers);
         sizeBox.addView(text("사이즈",13,MUTED));quickSize=new Spinner(this);ArrayAdapter<String> sizes=new ArrayAdapter<>(this,android.R.layout.simple_spinner_item,Inventory.SIZES);sizes.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);quickSize.setAdapter(sizes);quickSize.setSelection(Math.max(0,Math.min(3,quickSizeValue)));quickSize.setBackground(background(BG,LINE,9));quickSize.setPadding(dp(8),0,dp(8),0);LinearLayout.LayoutParams sizeLP=new LinearLayout.LayoutParams(-1,dp(50));sizeLP.topMargin=dp(6);sizeBox.addView(quickSize,sizeLP);
         quickQuantity=input(qtyBox,"변경 수량",quickQtyValue,false);quickQuantity.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);quickQuantity.setSelectAllOnFocus(true);quickQuantity.setHint("예: 2");
-        quickPreview=text("",14,TEAL);c.addView(quickPreview);
+        quickPreview=text("",14,ACCENT);c.addView(quickPreview);
         if(quickBaseline==null){captureQuick();quickBaseline=quickValues();}
         buttons(c,new String[]{"+ 추가","− 차감"},true,()->applyQuickAdjustment(false),()->applyQuickAdjustment(true));
-        if(!quickFeedback.isEmpty()){space(c,9);c.addView(text(quickFeedback,14,TEAL));}
+        if(!quickFeedback.isEmpty()){space(c,9);c.addView(text(quickFeedback,14,ACCENT));}
         quickQuantity.addTextChangedListener(new TextWatcher(){public void beforeTextChanged(CharSequence s,int a,int b,int c){}public void onTextChanged(CharSequence s,int a,int b,int c){quickQtyValue=s.toString();updateQuickPreview();}public void afterTextChanged(Editable e){}});
         quickSize.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){public void onItemSelected(AdapterView<?> parent,View view,int position,long id){quickSizeValue=position;updateQuickPreview();}public void onNothingSelected(AdapterView<?> parent){}});
         updateQuickPreview();
@@ -775,7 +784,7 @@ public final class MainActivity extends Activity {
         dialog.setOnShowListener(ignored->dialog.getButton(-1).setOnClickListener(view->{if(activeEditor!=dialog||transitioning)return;String value=name.getText().toString().trim();if(value.isEmpty()){name.setError("작업명을 입력해 주세요.");return;}if(!commitChange(()->{for(Inventory.Job recent:state.recentJobs)if(recent.id.equals(sourceId)){recent.title=value;return;}throw new IllegalArgumentException("작업 입력 기록을 찾을 수 없습니다.");}))return;dialog.dismiss();render();}));dialog.show();
     }
     private void quantityStrip(LinearLayout parent,long[] quantities,Long total,boolean big){quantityStrip(parent,quantities,total,big,false);}
-    private void quantityStrip(LinearLayout parent,long[] quantities,Long total,boolean big,boolean highlightLow){LinearLayout strip=new LinearLayout(this);String[] names={"S","M","L","XL","합계"};for(int i=0;i<(total==null?4:5);i++){LinearLayout cell=vertical();cell.setGravity(Gravity.CENTER);TextView name=text(names[i],12,MUTED);name.setGravity(Gravity.CENTER);cell.addView(name,new LinearLayout.LayoutParams(-1,-2));TextView val=heading(String.valueOf(i==4?total:quantities[i]),big?23:19);if(i==4)val.setTextColor(TEAL);else if(highlightLow&&quantities[i]>=1&&quantities[i]<=5){val.setTextColor(AMBER);val.setBackground(background(0xffffedcf,0xffe8ca8e,7));val.setTag("low-stock-quantity");}val.setSingleLine();val.setAutoSizeTextTypeUniformWithConfiguration(11,big?23:19,1,android.util.TypedValue.COMPLEX_UNIT_SP);cell.addView(val,new LinearLayout.LayoutParams(-1,dp(30)));val.setGravity(Gravity.CENTER);strip.addView(cell,new LinearLayout.LayoutParams(0,-2,1));}parent.addView(strip);}
+    private void quantityStrip(LinearLayout parent,long[] quantities,Long total,boolean big,boolean highlightLow){LinearLayout strip=new LinearLayout(this);String[] names={"S","M","L","XL","합계"};for(int i=0;i<(total==null?4:5);i++){LinearLayout cell=vertical();cell.setGravity(Gravity.CENTER);TextView name=text(names[i],12,MUTED);name.setGravity(Gravity.CENTER);cell.addView(name,new LinearLayout.LayoutParams(-1,-2));TextView val=heading(String.valueOf(i==4?total:quantities[i]),big?23:19);if(i==4)val.setTextColor(ACCENT);else if(highlightLow&&quantities[i]>=1&&quantities[i]<=5){val.setTextColor(AMBER);val.setBackground(background(0xffffedcf,0xffe8ca8e,7));val.setTag("low-stock-quantity");}val.setSingleLine();val.setAutoSizeTextTypeUniformWithConfiguration(11,big?23:19,1,android.util.TypedValue.COMPLEX_UNIT_SP);cell.addView(val,new LinearLayout.LayoutParams(-1,dp(30)));val.setGravity(Gravity.CENTER);strip.addView(cell,new LinearLayout.LayoutParams(0,-2,1));}parent.addView(strip);}
     private static final class RowEntryFields {
         AutoCompleteTextView sku,color;
         Spinner size;
@@ -1014,7 +1023,7 @@ public final class MainActivity extends Activity {
             space(body,8);body.addView(heading(day.getKey(),18));space(body,10);
             for(Inventory.Job j:day.getValue()){
                 LinearLayout c=card();c.addView(heading(j.title.isEmpty()?"수량 정리표":j.title,19));if(j.completed){space(c,4);c.addView(text("완료 · 편집 잠금",13,AMBER));}
-                space(c,5);c.addView(text("최초 입력: "+TimeLabels.format(j.sourceRecordedAt)+" · "+j.rows.size()+"행",14,MUTED));space(c,5);c.addView(text("마지막 수량 변경: "+TimeLabels.format(j.stockUpdatedAt),13,MUTED));space(c,7);c.addView(text("전체 "+String.format(Locale.KOREA,"%,d",Inventory.grandTotal(j.rows))+"개",19,TEAL));
+                space(c,5);c.addView(text("최초 입력: "+TimeLabels.format(j.sourceRecordedAt)+" · "+j.rows.size()+"행",14,MUTED));space(c,5);c.addView(text("마지막 수량 변경: "+TimeLabels.format(j.stockUpdatedAt),13,MUTED));space(c,7);c.addView(text("전체 "+String.format(Locale.KOREA,"%,d",Inventory.grandTotal(j.rows))+"개",19,ACCENT));
                 buttons(c,new String[]{"열기","작업명","삭제"},false,()->beforeReplace(()->{Inventory.Job latest=null;for(Inventory.Job candidate:state.jobs)if(candidate.id.equals(j.id))latest=candidate;if(latest==null){toast("보관 작업을 찾을 수 없습니다.");return;}replaceDraft(copy(latest),latest.hasCurrentTable()?1:0);}),()->renameJob(j.id),()->confirm("보관 작업 삭제","‘"+j.title+"’을 보관함에서 삭제합니다. 현재 열려 있는 표는 유지됩니다.",()->{if(!commitChange(()->state.jobs.removeIf(job->job.id.equals(j.id))))return;render();}));
             }
         }
