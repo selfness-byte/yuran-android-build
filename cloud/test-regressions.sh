@@ -16,3 +16,4 @@ while IFS= read -r -d '' qa_source; do qa_sources+=("$qa_source"); done < <(find
 "$qa_jdk/bin/java" -Djava.awt.headless=true -cp "$qa_classes" com.gongyo.orderly.ExportPhotoChecks
 "$qa_jdk/bin/java" -cp "$qa_classes" com.gongyo.tests.RegressionSuite
 "$qa_jdk/bin/java" -cp "$qa_classes" com.gongyo.tests.CaptureSessionChecks
+"$qa_jdk/bin/java" -cp "$qa_classes" com.gongyo.tests.CaptureRecoveryChecks

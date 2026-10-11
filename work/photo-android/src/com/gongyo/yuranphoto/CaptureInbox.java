@@ -14,6 +14,8 @@ import java.util.*;
 /** Durable private label inbox. Photo publication precedes audio; stock has a separate receipt. */
 public final class CaptureInbox {
  private static CaptureInbox instance;
+ private final Map<String,CaptureRecovery> recovery=new HashMap<>();
+ public synchronized CaptureRecovery recovery(String mode)throws IOException{check();CaptureRecovery value=recovery.get(mode);if(value==null){value=new CaptureRecovery(directory,io,mode);recovery.put(mode,value);}return value;}
  public static synchronized CaptureInbox get(Context context)throws IOException{if(instance==null)instance=new CaptureInbox(context.getApplicationContext());return instance;}
  public static final class Entry {
   public String id="",generation="",targetWorkId="",sourceHash="",imageHash="",sku="",color="",text="",mode="",message="";
@@ -34,7 +36,7 @@ public final class CaptureInbox {
  }
  public synchronized Entry entry(String id)throws IOException{for(Entry e:entries())if(e.id.equals(id))return e;throw new IOException("저장된 사진을 찾지 못했습니다.");}
  private void persist(List<Entry> entries)throws IOException{
-  try{JSONArray array=new JSONArray();for(Entry e:entries)array.put(json(e));byte[] bytes=array.toString().getBytes("UTF-8");index.write(bytes);try{resolver.notifyChange(android.net.Uri.parse("content://"+RuntimeIds.CAPTURE_AUTHORITY+"/inbox"),null);}catch(RuntimeException ignored){}}
+  try{JSONArray array=new JSONArray();for(Entry e:entries)array.put(json(e));byte[] bytes=array.toString().getBytes("UTF-8");if(bytes.length>MAX_INDEX)throw new IOException("사진 기록 보관 용량이 가득 찼습니다.");decode(bytes);index.write(bytes);try{resolver.notifyChange(android.net.Uri.parse("content://"+RuntimeIds.CAPTURE_AUTHORITY+"/inbox"),null);}catch(RuntimeException ignored){}}
   catch(JSONException e){throw new IOException("사진 기록을 저장하지 못했습니다.",e);}catch(IOException e){fence(e);throw e;}
  }
  public Entry save(Bitmap image,String originalHash,String text,String mode,String generation,String targetWorkId,String resolvedSku)throws IOException{
@@ -47,7 +49,7 @@ public final class CaptureInbox {
   if(parsed.sku.isEmpty()&&resolvedSku!=null&&!resolvedSku.isEmpty()){readText="STYLE: "+resolvedSku+"\n"+readText;parsed=IntakeText.parse(readText);}
   synchronized(this){
    check();List<Entry> entries=entries();
-   for(Entry previous:entries)if(previous.generation.equals(generation)&&previous.sourceHash.equals(sourceHash)&&previous.mode.equals(mode))return previous;
+   for(Entry previous:entries)if(previous.generation.equals(generation)&&previous.targetWorkId.equals(targetWorkId==null?"":targetWorkId)&&previous.sourceHash.equals(sourceHash)&&previous.mode.equals(mode))return previous;
    if(entries.size()>=MAX_ENTRIES)throw new IOException("저장 사진이 500장입니다. 보관 용량을 확인해 주세요.");
    long used=0;for(File file:io.list(directory))if(io.inspect(file)==CheckedAtomicFile.Kind.REGULAR)used+=file.length();
    if(bytes.length>MAX_DISK-used)throw new IOException("사진 보관 공간이 가득 찼습니다.");
@@ -71,7 +73,7 @@ public final class CaptureInbox {
    request.submitted=true;request.message="입고 등록 결과 확인 중";update(request);
   }
   Bundle reply=client.registerIntake(request.generation,request.targetWorkId,request.id,request.sourceHash,request.sku,request.color,request.quantities);
-  synchronized(this){Entry latest=entry(id);latest.committed=PhotoContract.OK.equals(reply.getString("status"));latest.message=reply.getString("reason",latest.committed?"새입고 저장됨":"등록 결과를 확인해 주세요.");update(latest);return latest;}
+  synchronized(this){Entry latest=entry(id);latest.committed=PhotoContract.OK.equals(reply.getString("status"));latest.message=reply.getString("reason",latest.committed?"새입고 저장됨":"등록 결과를 확인해 주세요.");if(!latest.committed&&PhotoContract.CONFLICT.equals(reply.getString("status")))latest.message+=" · 원래 작업과 요청을 유지합니다. 작업이 바뀌었으면 현재 작업을 확인하고 사진을 다시 선택하세요. 이미 반영된 사진은 중복 입고되지 않습니다.";update(latest);return latest;}
  }
  public synchronized Bitmap thumbnail(Entry e,int edge)throws IOException{
   check();byte[] bytes=new CheckedAtomicFile(photoFile(e),io).readFully(MAX_IMAGE,b->{if(!hash(b).equals(e.imageHash))throw new IOException("보관 사진이 변경됐습니다.");});
@@ -96,7 +98,7 @@ public final class CaptureInbox {
   try{
    JSONArray a=new JSONArray(new String(bytes,"UTF-8"));if(a.length()>MAX_ENTRIES)throw new IOException("보관 사진 개수 오류");List<Entry> result=new ArrayList<>();Set<String> ids=new HashSet<>();
    for(int i=0;i<a.length();i++){JSONObject j=a.getJSONObject(i);Entry e=new Entry();e.id=j.getString("id");e.generation=j.getString("generation");e.targetWorkId=j.getString("targetWorkId");e.sourceHash=j.getString("sourceHash");e.imageHash=j.getString("imageHash");e.sku=j.getString("sku");e.color=j.getString("color");e.text=j.getString("text");e.mode=j.getString("mode");e.message=j.getString("message");e.createdAt=j.getLong("createdAt");e.ready=j.getBoolean("ready");e.submitted=j.getBoolean("submitted");e.committed=j.getBoolean("committed");JSONArray q=j.getJSONArray("quantities");
-    if(!e.id.matches("[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}")||!ids.add(e.id)||!e.sourceHash.matches("[0-9a-f]{64}")||!e.imageHash.matches("[0-9a-f]{64}")||e.sku.length()>80||e.color.length()>80||e.text.length()>12000||e.message.length()>1024||q.length()!=4||!(e.mode.equals("intake")||e.mode.equals("lookup"))||e.createdAt<=0)throw new IOException("보관 사진 기록 오류");
+    if(!e.id.matches("[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}")||!ids.add(e.id)||!e.sourceHash.matches("[0-9a-f]{64}")||!e.imageHash.matches("[0-9a-f]{64}")||e.sku.length()>80||e.color.length()>80||e.text.length()>12000||e.message.length()>12000||q.length()!=4||!(e.mode.equals("intake")||e.mode.equals("lookup"))||e.createdAt<=0)throw new IOException("보관 사진 기록 오류");
     for(int n=0;n<4;n++){e.quantities[n]=q.getLong(n);if(e.quantities[n]<0||e.quantities[n]>999999)throw new IOException("보관 수량 오류");}
     if(e.ready||e.submitted||e.committed){if(e.mode.equals("intake"))IntakeContract.fingerprint(e.generation,e.targetWorkId,e.sourceHash,e.sku,e.color,e.quantities);}
     if(e.committed&&!e.submitted)throw new IOException("확인되지 않은 입고 완료 기록");result.add(e);

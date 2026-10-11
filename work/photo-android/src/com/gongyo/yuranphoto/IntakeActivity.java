@@ -18,7 +18,7 @@ import java.util.concurrent.*;
 public final class IntakeActivity extends Activity {
  private final ExecutorService worker=Executors.newSingleThreadExecutor();
  private final Handler main=new Handler(Looper.getMainLooper());
- private PhotoClient client;private CaptureInbox inbox;private String mode="intake",pendingGeneration="",pendingTarget="";
+ private PhotoClient client;private CaptureInbox inbox;private CaptureRecovery recovery;private String mode="intake",pendingGeneration="",pendingTarget="";
  private Runnable afterWork;private boolean busy,active,closed;private TextView status;private Button camera,file;private ListView list;
  private final List<CaptureInbox.Entry> shown=new ArrayList<>();
  private final ContentObserver observer=new ContentObserver(main){public void onChange(boolean selfChange){if(active&&!busy)refresh();}};
@@ -31,11 +31,13 @@ public final class IntakeActivity extends Activity {
   TextView hint=new TextView(this);hint.setText(mode.equals("intake")?"사진 옆 S·M·L·XL 수량을 읽어 입고합니다.\n수량이 불명확한 사진은 아래 목록에서 확인하세요.":"품번이 읽히면 사진을 저장하고 현재 작업의 재고를 보여줍니다.");hint.setTextSize(16);root.addView(hint);
   camera=PhotoUi.button(root,"카메라 연속 촬영",v->{Intent intent=new Intent(this,LiveLabelActivity.class);intent.putExtra("mode",mode);startActivity(intent);});
   file=PhotoUi.button(root,"사진 파일 읽기",v->chooseFiles());
+  PhotoUi.button(root,"남은 사진 이어서 처리",v->work(this::resumeFiles));
+  PhotoUi.button(root,"남은 사진 선택 취소",v->{if(!busy&&recovery!=null)cancelRemaining();});
   status=new TextView(this);status.setTextSize(16);root.addView(status);
   list=new ListView(this);root.addView(list,new LinearLayout.LayoutParams(-1,0,1));list.setOnItemClickListener((parent,view,position,id)->{if(!busy&&position<shown.size())review(shown.get(position));});
   PhotoUi.button(root,"돌아가기",v->finish());setContentView(root);
   getContentResolver().registerContentObserver(Uri.parse("content://"+RuntimeIds.CAPTURE_AUTHORITY+"/inbox"),false,observer);
-  work(()->{client=PhotoClient.get(getApplicationContext());inbox=CaptureInbox.get(getApplicationContext());client.compatibility();return "저장된 사진을 눌러 확인하거나 이어서 등록하세요.";});
+  work(()->{client=PhotoClient.get(getApplicationContext());inbox=CaptureInbox.get(getApplicationContext());recovery=inbox.recovery(mode);client.compatibility();return recovery.batch()==null?"저장된 사진을 눌러 확인하거나 이어서 등록하세요.":resumeFiles();});
  }
  @Override protected void onResume(){super.onResume();active=true;if(inbox!=null&&!busy)refresh();}
  @Override protected void onPause(){active=false;super.onPause();}
@@ -46,10 +48,11 @@ public final class IntakeActivity extends Activity {
  }
  private void refresh(){
   if(closed||inbox==null||busy)return;
-  worker.execute(()->{try{List<CaptureInbox.Entry> entries=inbox.entries();main.post(()->{if(closed)return;shown.clear();List<String> labels=new ArrayList<>();for(CaptureInbox.Entry e:entries)if(e.mode.equals(mode)){shown.add(e);long total=0;for(long q:e.quantities)total+=q;labels.add((e.sku.isEmpty()?"품번 확인 필요":e.sku)+" · "+e.color+"\n"+(e.committed?"입고 완료":e.submitted?"등록 결과 확인 필요":mode.equals("lookup")?"사진 저장됨":e.ready?"입고 대기":"수량 확인 필요")+(total>0?" · "+total+"개":""));}list.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_list_item_1,labels));});}catch(IOException e){main.post(()->{if(!closed)status.setText(e.getMessage());});}});
+  worker.execute(()->{try{List<CaptureInbox.Entry> entries=inbox.entries();main.post(()->{if(closed)return;shown.clear();List<String> labels=new ArrayList<>();for(CaptureInbox.Entry e:entries)if(e.mode.equals(mode)){shown.add(e);long total=0;for(long q:e.quantities)total+=q;labels.add((e.sku.isEmpty()?"품번 확인 필요":e.sku)+" · "+e.color+"\n"+(e.committed?"입고 완료":e.submitted?"등록 결과 확인 필요":mode.equals("lookup")?"사진 저장됨":e.ready?"입고 대기":"수량 확인 필요")+(total>0?" · "+total+"개":"")+(mode.equals("lookup")?"\n"+e.message:""));}list.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_list_item_1,labels));});}catch(IOException e){main.post(()->{if(!closed)status.setText(e.getMessage());});}});
  }
  private void chooseFiles(){
   work(()->{
+   if(recovery.batch()!=null)throw new IOException("남은 사진 이어서 처리를 먼저 눌러 주세요. 기존 작업과 사진은 유지됩니다.");
    if(mode.equals("intake")){Bundle context=client.beginIntake();pendingGeneration=context.getString("generation","");pendingTarget=context.getString("targetWorkId","");}
    else{pendingGeneration=client.compatibility().generation;pendingTarget="";}
    main.post(()->{if(closed)return;Intent choose=new Intent(Intent.ACTION_OPEN_DOCUMENT);choose.addCategory(Intent.CATEGORY_OPENABLE);choose.setType("image/*");choose.putExtra(Intent.EXTRA_ALLOW_MULTIPLE,true);choose.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);try{startActivityForResult(choose,91);}catch(ActivityNotFoundException e){status.setText("사진 선택 앱을 열지 못했습니다.");}});
@@ -61,29 +64,83 @@ public final class IntakeActivity extends Activity {
   LinkedHashSet<Uri> unique=new LinkedHashSet<>();if(data.getClipData()!=null)for(int i=0;i<data.getClipData().getItemCount();i++)unique.add(data.getClipData().getItemAt(i).getUri());else if(data.getData()!=null)unique.add(data.getData());
   if(unique.isEmpty())return;if(unique.size()>20){status.setText("사진은 한 번에 20장까지 선택해 주세요.");return;}
   if(pendingGeneration.isEmpty()){status.setText("입고할 작업을 다시 확인한 뒤 사진을 선택해 주세요.");return;}
-  final List<Uri> inputs=new ArrayList<>(unique);final String generation=pendingGeneration,target=pendingTarget;final boolean mayPersist=(data.getFlags()&Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)!=0;
-  Work importWork=()->{
-   int confirmed=0,saved=0,failed=0;String failure="";
-   for(Uri uri:inputs){boolean persisted=false;Bitmap image=null;
-    try{
-     if(mayPersist)try{getContentResolver().takePersistableUriPermission(uri,Intent.FLAG_GRANT_READ_URI_PERMISSION);persisted=true;}catch(SecurityException ignored){}
-     LabelRecognition.Source source=()->getApplicationContext().getContentResolver().openInputStream(uri);
-     String sourceHash=CaptureInbox.sourceHash(source);LabelRecognition.Result resultText=LabelRecognition.readText(getApplicationContext(),source);
-     String text=resultText.text;IntakeText.Result parsed=IntakeText.parse(text);
-     if(parsed.sku.isEmpty()||parsed.color.isEmpty())try{
-      Bundle match=LabelMatcher.match(client,text,new ArrayList<String>());String sku=match.getString("sku",""),color=match.getString("color","");
-      if(parsed.sku.isEmpty()&&!sku.isEmpty())text="STYLE: "+sku+"\n"+text;
-      if(parsed.color.isEmpty()&&!color.isEmpty())text="COLOR: "+color+"\n"+text;
-     }catch(IOException ignored){/* Save for explicit review instead of guessing. */}
-     image=LabelRecognition.decode(source);CaptureInbox.Entry entry=inbox.save(image,sourceHash,text,mode,generation,target,"");saved++;
-     main.post(()->{if(active&&!closed)beep();});
-     if(mode.equals("intake")&&entry.ready){entry=inbox.submit(entry.id,client);if(entry.committed)confirmed++;}
-     else if(mode.equals("lookup")&&!entry.sku.isEmpty()){final String summary=entry.sku+"\n"+client.stockSummary(entry.sku);main.post(()->{if(!closed)status.setText(summary);});}
-    }catch(Exception e){failed++;failure=e.getMessage()==null?"처리 실패":e.getMessage();}
-    finally{if(image!=null)image.recycle();if(persisted)try{getContentResolver().releasePersistableUriPermission(uri,Intent.FLAG_GRANT_READ_URI_PERMISSION);}catch(SecurityException ignored){}}
+  Set<String> acquired=new HashSet<>();
+  try{
+   inbox=CaptureInbox.get(getApplicationContext());recovery=inbox.recovery(mode);
+   if(recovery.batch()!=null)throw new IOException("남은 사진을 먼저 처리하거나 선택 취소해 주세요.");
+   CaptureRecovery.Batch other=inbox.recovery(mode.equals("intake")?"lookup":"intake").batch();
+   List<String> sources=new ArrayList<>();Set<String> existing=new HashSet<>();
+   for(android.content.UriPermission permission:getContentResolver().getPersistedUriPermissions())if(permission.isReadPermission())existing.add(permission.getUri().toString());
+   for(Uri uri:unique){
+    if(other!=null)for(CaptureRecovery.Item item:other.items)if(item.uri.equals(uri.toString()))throw new IOException("다른 모드에서 같은 사진을 처리 중입니다. 먼저 남은 처리를 완료해 주세요.");
+    if(!existing.contains(uri.toString())){
+     if((data.getFlags()&Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)==0)throw new IOException("이 사진 제공 앱은 재시작 후 읽기를 허용하지 않습니다. 사진을 처리하지 않았습니다. 기기의 파일 앱에서 다시 선택해 주세요.");
+     try{getContentResolver().takePersistableUriPermission(uri,Intent.FLAG_GRANT_READ_URI_PERMISSION);}catch(SecurityException e){throw new IOException("사진을 계속 읽을 권한을 저장하지 못했습니다. 파일 앱에서 다시 선택해 주세요.",e);}
+     acquired.add(uri.toString());
+    }
+    sources.add(uri.toString());
    }
-   return "사진 "+saved+"장 저장"+(mode.equals("intake")?" · "+confirmed+"장 입고 완료":"")+(failed>0?"\n확인 필요 "+failed+"장 · "+failure:"");
-  };if(busy)afterWork=()->work(importWork);else work(importWork);
+   recovery.enqueue(pendingGeneration,pendingTarget,sources,acquired);
+   Runnable resume=()->{try{if(recovery.batch()!=null)work(this::resumeFiles);}catch(IOException e){status.setText(e.getMessage());}};
+   if(busy)afterWork=resume;else resume.run();
+  }catch(Exception e){
+   boolean safeToRelease=false;try{safeToRelease=recovery==null||recovery.batch()==null;}catch(IOException uncertain){}
+   if(safeToRelease)for(String uri:acquired)releaseGrant(uri);
+   status.setText(e.getMessage()==null?"선택한 사진을 보관하지 못했습니다. 다시 선택해 주세요.":e.getMessage());
+  }
+ }
+ private String resumeFiles()throws Exception{
+  if(recovery==null)return "사진 목록을 준비 중입니다.";
+  long owner=recovery.claimQueue();if(owner==0)return "이전 화면에서 사진을 처리하고 있습니다. 남은 사진은 유지됩니다.";
+  int saved=0,confirmed=0;StringBuilder summaries=new StringBuilder();
+  try{
+   for(int processed=0;processed<20;processed++){
+    CaptureRecovery.Batch batch=recovery.batch();if(batch==null)break;
+    CaptureRecovery.Item item=batch.items.get(0);Bitmap image=null;
+    try{
+     CaptureInbox.Entry entry;
+     if(!item.entryId.isEmpty())entry=inbox.entry(item.entryId);
+     else{
+      Uri uri=Uri.parse(item.uri);LabelRecognition.Source source=()->getApplicationContext().getContentResolver().openInputStream(uri);
+      String sourceHash=CaptureInbox.sourceHash(source);recovery.sourceHash(owner,item.id,sourceHash);
+      String text=LabelRecognition.readText(getApplicationContext(),source).text;IntakeText.Result parsed=IntakeText.parse(text);
+      if(parsed.sku.isEmpty()||parsed.color.isEmpty())try{
+       Bundle match=LabelMatcher.match(client,text,new ArrayList<String>());String sku=match.getString("sku",""),color=match.getString("color","");
+       if(parsed.sku.isEmpty()&&!sku.isEmpty())text="STYLE: "+sku+"\n"+text;
+       if(parsed.color.isEmpty()&&!color.isEmpty())text="COLOR: "+color+"\n"+text;
+      }catch(IOException ignored){}
+      image=LabelRecognition.decode(source);
+      if(!sourceHash.equals(CaptureInbox.sourceHash(source)))throw new IOException("읽는 동안 원본 사진이 변경되었습니다. 남은 사진을 유지합니다.");
+      entry=inbox.save(image,sourceHash,text,mode,batch.generation,batch.targetWorkId,"");
+      recovery.saved(owner,item.id,entry.id);saved++;
+      main.post(()->{if(active&&!closed)beep();});
+     }
+     if(mode.equals("intake")&&entry.ready){entry=inbox.submit(entry.id,client);if(entry.committed)confirmed++;}
+     else if(mode.equals("lookup")&&!entry.sku.isEmpty()){
+      entry.message=boundedSummary(client.stockSummary(entry.sku));inbox.update(entry);
+      if(summaries.length()>0)summaries.append("\n\n");summaries.append(entry.sku).append('\n').append(entry.message);
+     }
+     // Saved entry identity is durable; replay no longer requires this source grant.
+     if(item.releaseGrant)releaseGrant(item.uri);recovery.complete(owner,item.id);
+    }catch(Exception e){
+     String prefix=summaries.length()==0?"":summaries+"\n\n";
+     return prefix+"처리를 멈췄습니다. 남은 사진과 원래 작업은 보관됩니다. 남은 사진 이어서 처리 또는 선택 취소를 눌러 주세요.\n"+(e.getMessage()==null?"저장 목록을 확인해 주세요.":e.getMessage());
+    }finally{if(image!=null)image.recycle();}
+   }
+   if(summaries.length()>0)return summaries.toString();
+   return "사진 "+saved+"장 저장"+(mode.equals("intake")?" · "+confirmed+"장 입고 완료":"")+" · 각 사진을 눌러 결과를 확인하세요.";
+  }finally{recovery.releaseQueue(owner);}
+ }
+ private static String boundedSummary(String summary)throws IOException{
+  if(summary==null)summary="";if(summary.length()>12000)throw new IOException("재고 결과가 너무 깁니다. 사진은 보관됐으며 현재 재고 조회에서 확인해 주세요.");return summary;
+ }
+ private void releaseGrant(String uri){try{getContentResolver().releasePersistableUriPermission(Uri.parse(uri),Intent.FLAG_GRANT_READ_URI_PERMISSION);}catch(SecurityException ignored){}}
+ private void cancelRemaining(){
+  new AlertDialog.Builder(this).setTitle("남은 사진 선택 취소").setMessage("아직 처리하지 않은 선택을 취소합니다. 저장된 사진과 확인 중인 입고 요청은 원래 작업으로 저장 목록에 남습니다. 원본 사진은 삭제하지 않습니다.")
+   .setNegativeButton("계속 보관",null).setPositiveButton("남은 선택 취소",(dialog,which)->work(()->{
+    synchronized(recovery){for(CaptureRecovery.Item item:recovery.remainingForDiscard())if(item.releaseGrant)releaseGrant(item.uri);recovery.discardRemaining();}
+    return "남은 선택을 취소했습니다. 저장된 사진은 목록에서 확인하세요.";
+   })).show();
  }
  private void review(CaptureInbox.Entry selected){
   if(inbox==null)return;
@@ -105,7 +162,7 @@ public final class IntakeActivity extends Activity {
     dialog.dismiss();work(()->{if(!entry.submitted)inbox.update(entry);CaptureInbox.Entry result=inbox.submit(entry.id,client);return result.sku+" · "+result.message;});
    }catch(Exception e){note.setText(e.getMessage());}
   });
-  else if(mode.equals("lookup"))dialog.getButton(-1).setOnClickListener(v->work(()->{String summary=client.stockSummary(entry.sku);main.post(()->{if(dialog.isShowing())note.setText(summary);});return summary;}));
+  else if(mode.equals("lookup"))dialog.getButton(-1).setOnClickListener(v->work(()->{String summary=client.stockSummary(entry.sku);entry.message=boundedSummary(summary);inbox.update(entry);main.post(()->{if(dialog.isShowing())note.setText(summary);});return entry.sku+"\n"+summary;}));
   worker.execute(()->{try{Bitmap thumbnail=inbox.thumbnail(entry,512);main.post(()->{if(dialog.isShowing()&&!closed)picture.setImageBitmap(thumbnail);else thumbnail.recycle();});}catch(IOException e){main.post(()->{if(dialog.isShowing())note.setText(e.getMessage());});}});
  }
  private EditText field(LinearLayout body,String label,String value){TextView title=new TextView(this);title.setText(label);body.addView(title);EditText input=new EditText(this);input.setSingleLine(true);input.setText(value);input.setMinHeight(PhotoUi.dp(body,48));body.addView(input);return input;}

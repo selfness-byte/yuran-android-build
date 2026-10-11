@@ -25,13 +25,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class LiveLabelActivity extends Activity {
  private final Handler main=new Handler(Looper.getMainLooper());
  private final ExecutorService storage=Executors.newSingleThreadExecutor();
- private final CaptureGate gate=new CaptureGate();
+ private volatile CaptureSession captureState;
+ private volatile CaptureRecovery recovery;
+ private final ExecutorService catalog=Executors.newSingleThreadExecutor();
  private final AtomicBoolean analysing=new AtomicBoolean();
  private final List<ImageReader> retiring=new ArrayList<>();
  private HandlerThread cameraThread;private Handler cameraHandler;
  private TextRecognizer recognizer;private CameraDevice camera;private CameraCaptureSession session;private ImageReader reader;private Surface previewSurface;
  private TextureView preview;private TextView status;private Button next,manual;
- private volatile boolean active,closing,saving,ready,manualRequested,openingCamera;private volatile int epoch;private long lastAnalysis;
+ private volatile boolean active,closing,ready,manualRequested,openingCamera;private volatile int epoch;private long lastAnalysis;
  private Size previewSize;private int sensorOrientation;private String cameraId="",mode="intake",generation="",targetWorkId="",lastSavedId="";
  private PhotoClient client;private CaptureInbox inbox;private final Set<String> knownSkus=new HashSet<>();
  @Override public void onCreate(Bundle state){
@@ -41,9 +43,9 @@ public final class LiveLabelActivity extends Activity {
   TextView title=new TextView(this);title.setText(mode.equals("intake")?"새입고 연속 촬영":"재고 조회 연속 촬영");title.setTextSize(23);root.addView(title);
   status=new TextView(this);status.setTextSize(16);status.setText("품번이 선명하게 보이도록 택을 비춰 주세요.");root.addView(status);
   preview=new TextureView(this);root.addView(preview,new LinearLayout.LayoutParams(-1,0,1));
-  manual=PhotoUi.button(root,"지금 사진 저장",v->{if(ready&&!saving)manualRequested=true;});
-  next=PhotoUi.button(root,"같은 품번 다음 장 준비",v->{if(!saving){synchronized(gate){gate.reset();}status.setText("다음 택을 비춰 주세요.");}});
-  PhotoUi.button(root,"촬영 끝내기",v->finish());setContentView(root);
+  manual=PhotoUi.button(root,"지금 사진 저장",v->{if(ready&&captureState!=null&&!captureState.busy())manualRequested=true;});
+  next=PhotoUi.button(root,"같은 품번 다음 장 준비",v->{if(ready&&captureState!=null&&!captureState.busy())storage.execute(()->{try{recovery.reset(captureState);message("다음 택을 비춰 주세요.");}catch(Exception e){message(e.getMessage());}});});
+  PhotoUi.button(root,"촬영 끝내기",v->endCapture());setContentView(root);
   recognizer=TextRecognition.getClient(new ChineseTextRecognizerOptions.Builder().build());
   cameraThread=new HandlerThread("yuran-label-camera");cameraThread.start();cameraHandler=new Handler(cameraThread.getLooper());
   preview.setSurfaceTextureListener(new TextureView.SurfaceTextureListener(){
@@ -54,23 +56,35 @@ public final class LiveLabelActivity extends Activity {
   });
   storage.execute(()->{
    try{
-    client=PhotoClient.get(getApplicationContext());inbox=CaptureInbox.get(getApplicationContext());
-    if(mode.equals("intake")){Bundle context=client.beginIntake();generation=context.getString("generation","");targetWorkId=context.getString("targetWorkId","");}
-    else generation=client.compatibility().generation;
-    // Exact full-line catalogue fallback supports labels whose Korean markers were not read.
-    try{int offset=0;String g="";long revision=-1;Set<String> loaded=new HashSet<>();
-     do{Bundle page=client.labelCatalogPage("",offset,g,revision);if(!PhotoContract.OK.equals(page.getString("status")))break;g=page.getString("generation","");revision=page.getLong("revision",-1);ArrayList<Bundle> rows=page.getParcelableArrayList("items");if(rows==null)break;
-      for(Bundle row:rows){String sku=PhotoContract.key(row.getString("sku"));if(sku.length()>=5&&sku.matches(".*[A-Z].*")&&sku.matches(".*[0-9].*"))loaded.add(sku);}
-      int next=page.getInt("nextOffset",-1);if(next<=offset)break;offset=next;
-     }while(offset<20000);
-     synchronized(knownSkus){knownSkus.addAll(loaded);}
-    }catch(Exception ignored){/* Explicit printed product numbers still work without catalogue hints. */}
-    ready=true;message("품번을 읽으면 사진을 저장하고 완료음이 납니다.");
+    client=PhotoClient.get(getApplicationContext());inbox=CaptureInbox.get(getApplicationContext());recovery=inbox.recovery(mode);
+    CaptureSession restored=recovery.session();
+    if(restored==null){
+     if(mode.equals("intake")){Bundle context=client.beginIntake();restored=recovery.begin(context.getString("generation",""),context.getString("targetWorkId",""));}
+     else restored=recovery.begin(client.compatibility().generation,"");
+    }
+    captureState=restored;generation=restored.generation;targetWorkId=restored.targetWorkId;
+    ready=true;message(restored.interrupted()?"이전 촬영이 중단됐습니다. 저장 목록을 확인한 뒤 같은 품번 다음 장 준비를 눌러 주세요.":restored.busy()?"사진 저장과 입고 결과를 확인하고 있습니다.":"품번을 읽으면 사진을 저장하고 완료음이 납니다.");
+    if(!closing)catalog.execute(this::loadCatalog);
    }catch(Exception e){message(e.getMessage());}
   });
  }
+ private void loadCatalog(){
+  try{
+   int offset=0;String g="";long revision=-1;Set<String> loaded=new HashSet<>();
+   do{
+    if(closing||Thread.currentThread().isInterrupted())return;
+    Bundle page=client.labelCatalogPage("",offset,g,revision);
+    if(!PhotoContract.OK.equals(page.getString("status")))return;
+    String pageGeneration=page.getString("generation","");long pageRevision=page.getLong("revision",-1);
+    if(!generation.equals(pageGeneration)||(offset>0&&(!g.equals(pageGeneration)||revision!=pageRevision)))return;
+    g=pageGeneration;revision=pageRevision;ArrayList<Bundle> rows=page.getParcelableArrayList("items");if(rows==null)return;
+    for(Bundle row:rows){String sku=PhotoContract.key(row.getString("sku"));if(sku.length()>=5&&sku.matches(".*[A-Z].*")&&sku.matches(".*[0-9].*"))loaded.add(sku);}
+    int nextOffset=page.getInt("nextOffset",-1);if(nextOffset<=offset){synchronized(knownSkus){knownSkus.addAll(loaded);}return;}offset=nextOffset;
+   }while(offset<20000);
+  }catch(Exception ignored){/* Explicit printed product numbers remain ready without catalogue hints. */}
+ }
  @Override protected void onResume(){super.onResume();active=true;if(preview.isAvailable())openCamera();}
- @Override protected void onPause(){active=false;closeCamera();super.onPause();}
+ @Override protected void onPause(){active=false;if(captureState!=null)captureState.pause();closeCamera();super.onPause();}
  @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] results){super.onRequestPermissionsResult(request,permissions,results);if(request==81&&results.length>0&&results[0]==PackageManager.PERMISSION_GRANTED)openCamera();else message("카메라 권한이 필요합니다. 사진 파일로도 입고할 수 있습니다.");}
  private void openCamera(){
   if(!active||closing||camera!=null||openingCamera||!preview.isAvailable())return;
@@ -120,7 +134,7 @@ public final class LiveLabelActivity extends Activity {
  private void analyse(ImageReader source,int cameraEpoch){
   Image image;try{image=source.acquireLatestImage();}catch(IllegalStateException closed){return;}
   if(image==null)return;long now=SystemClock.elapsedRealtime();
-  if(!active||!ready||saving||cameraEpoch!=epoch||now-lastAnalysis<300||!analysing.compareAndSet(false,true)){image.close();return;}
+  if(!active||!ready||captureState==null||captureState.busy()||cameraEpoch!=epoch||now-lastAnalysis<300||!analysing.compareAndSet(false,true)){image.close();return;}
   lastAnalysis=now;int rotation=(sensorOrientation-getWindowManager().getDefaultDisplay().getRotation()*90+360)%360;
   try{
    recognizer.process(InputImage.fromMediaImage(image,rotation)).addOnCompleteListener(Runnable::run,task->{
@@ -128,13 +142,14 @@ public final class LiveLabelActivity extends Activity {
      if(!active||closing||cameraEpoch!=epoch)return;
      if(!task.isSuccessful()){message("초점을 맞춰 다시 비춰 주세요.");return;}
      String text=LabelRecognition.intakeText(task.getResult());if(text.length()>LabelRecognition.MAX_TEXT)return;
-     String sku=resolveSku(text);boolean capture;
-     synchronized(gate){capture=gate.observe(sku,SystemClock.elapsedRealtime());}
-     if(manualRequested){capture=true;manualRequested=false;}
-     if(!capture)return;
-     saving=true;byte[] jpeg=jpeg(image);final String found=sku;final String recognized=text;
-     storage.execute(()->saveFrame(jpeg,rotation,recognized,found));
-    }catch(Exception e){saving=false;message(e.getMessage());}
+     String sku=resolveSku(text);final CaptureSession owned=captureState;
+     long token=owned.claim(sku,SystemClock.elapsedRealtime(),manualRequested);manualRequested=false;
+     if(token==0)return;
+     try{
+      recovery.reserve(owned,token);byte[] jpeg=jpeg(image);final String found=sku,recognized=text;
+      storage.execute(()->saveFrame(jpeg,rotation,recognized,found,owned,token));
+     }catch(Exception failure){owned.release(token);throw failure;}
+    }catch(Exception e){message(e.getMessage());}
     finally{image.close();analysing.set(false);closeRetired();if(closing)recognizer.close();}
    });
   }catch(Exception e){image.close();analysing.set(false);closeRetired();message(e.getMessage());}
@@ -144,20 +159,19 @@ public final class LiveLabelActivity extends Activity {
   synchronized(knownSkus){for(String line:IntakeText.normalize(text).split("\\r?\\n")){String word=line.trim();if(knownSkus.contains(word))found.add(word);}}
   return found.size()==1?found.iterator().next():"";
  }
- private void saveFrame(byte[] bytes,int rotation,String text,String sku){
+ private void saveFrame(byte[] bytes,int rotation,String text,String sku,CaptureSession owned,long token){
   Bitmap frame=null,upright=null;
   try{
    frame=BitmapFactory.decodeByteArray(bytes,0,bytes.length);if(frame==null)throw new IOException("촬영 사진을 읽지 못했습니다.");
    if(rotation==0)upright=frame;else{Matrix matrix=new Matrix();matrix.postRotate(rotation);upright=Bitmap.createBitmap(frame,0,0,frame.getWidth(),frame.getHeight(),matrix,true);}
-   CaptureInbox.Entry entry=inbox.save(upright,null,text,mode,generation,targetWorkId,sku);
-   synchronized(gate){gate.saved(sku);}lastSavedId=entry.id;
+   CaptureInbox.Entry entry=inbox.save(upright,null,text,owned.mode,owned.generation,owned.targetWorkId,sku);
+   recovery.saved(owned,token,sku);lastSavedId=entry.id;
    main.post(()->{if(active&&!closing){status.setText((entry.sku.isEmpty()?"사진":entry.sku)+" 저장 완료 · 다음 택을 비춰 주세요.");beep();}});
-   saving=false;
    if(mode.equals("intake")&&entry.ready){CaptureInbox.Entry result=inbox.submit(entry.id,client);if(lastSavedId.equals(result.id))message(result.sku+" · "+result.message);}
    else if(mode.equals("lookup")&&!entry.sku.isEmpty()){String stock=client.stockSummary(entry.sku);if(lastSavedId.equals(entry.id))message(entry.sku+"\n"+stock+"\n다음 택을 비춰 주세요.");}
    else message("사진 저장됨 · 사이즈별 수량은 저장 목록에서 확인해 주세요.");
   }catch(Exception e){message("사진 또는 입고 확인 필요: "+(e.getMessage()==null?"다시 시도해 주세요.":e.getMessage()));}
-  finally{saving=false;if(upright!=null&&upright!=frame)upright.recycle();if(frame!=null)frame.recycle();}
+  finally{owned.release(token);if(upright!=null&&upright!=frame)upright.recycle();if(frame!=null)frame.recycle();}
  }
  private static byte[] jpeg(Image image)throws IOException{
   int width=image.getWidth(),height=image.getHeight();byte[] nv21=new byte[width*height*3/2];Image.Plane[] planes=image.getPlanes();int cursor=0;
@@ -167,6 +181,12 @@ public final class LiveLabelActivity extends Activity {
   for(int row=0;row<height/2;row++)for(int col=0;col<width/2;col++){nv21[cursor++]=v.get(vs+row*planes[2].getRowStride()+col*planes[2].getPixelStride());nv21[cursor++]=u.get(us+row*planes[1].getRowStride()+col*planes[1].getPixelStride());}
   ByteArrayOutputStream out=new ByteArrayOutputStream();if(!new YuvImage(nv21,ImageFormat.NV21,width,height,null).compressToJpeg(new Rect(0,0,width,height),90,out))throw new IOException("촬영 사진을 저장하지 못했습니다.");return out.toByteArray();
  }
+ @Override public void onBackPressed(){endCapture();}
+ private void endCapture(){
+  if(!ready||captureState==null){finish();return;}
+  if(captureState.busy()){message("사진 저장과 입고 결과 확인이 끝난 뒤 촬영을 종료해 주세요.");return;}
+  ready=false;storage.execute(()->{try{recovery.end(captureState);main.post(()->{if(!closing)finish();});}catch(Exception e){ready=true;message(e.getMessage());}});
+ }
  private void beep(){try{ToneGenerator tone=new ToneGenerator(AudioManager.STREAM_MUSIC,80);tone.startTone(ToneGenerator.TONE_PROP_ACK,160);main.postDelayed(tone::release,250);}catch(RuntimeException ignored){/* The visible saved state remains available with audio muted/unavailable. */}}
  private void message(String text){main.post(()->{if(!closing&&!isFinishing())status.setText(text==null?"다시 확인해 주세요.":text);});}
  private synchronized void closeCamera(){
@@ -175,5 +195,5 @@ public final class LiveLabelActivity extends Activity {
   if(reader!=null){retiring.add(reader);reader=null;}if(!analysing.get())closeRetired();
  }
  private synchronized void closeRetired(){for(ImageReader old:retiring)old.close();retiring.clear();}
- @Override protected void onDestroy(){closing=true;active=false;closeCamera();storage.shutdown();if(!analysing.get())recognizer.close();cameraThread.quitSafely();super.onDestroy();}
+ @Override protected void onDestroy(){closing=true;active=false;closeCamera();storage.shutdown();catalog.shutdownNow();if(!analysing.get())recognizer.close();cameraThread.quitSafely();super.onDestroy();}
 }
