@@ -11,7 +11,7 @@ public final class IntakeText {
  public static final Pattern GARMENT_SIZE=Pattern.compile("(?:호\\s*칭|사이즈|尺码|尺碼|号型|號型|尺寸|(?<![A-Z0-9])SIZE)[ \\t]*[:：#=.-]?[ \\t]*([0-9]{2,3}[ \\t]*\\([ \\t]*(?:XXXL|XXL|XL|XS|S|M|L)[ \\t]*\\)|(?:[0-9]{1,3})?(?:XXXL|XXL|XL|XS|S|M|L)|[0-9]{2,3})(?![A-Z0-9])");
  private static final Pattern STYLE=Pattern.compile("(?<![A-Z0-9])EY[0-9]UTS[0-9]{3,6}(?:R[0-9]{1,3})?(?![A-Z0-9])");
  private static final Pattern COUNTS=Pattern.compile("(XL|S|M|L)[ \\t]*[:X×=]?[ \\t]*([0-9]{1,6})(?![0-9])");
- private static final Pattern VISIBLE_COUNT=Pattern.compile("(?<![A-Z0-9])(?:XL|S|M|L)[ \\t]*[:X×=]?[ \\t]*[-+]?[0-9]");
+ private static final Pattern VISIBLE_COUNT=Pattern.compile("(?<![A-Z0-9])(?:XL|S|M|L)(?:[ \\t]*[:X×=]|[ \\t]*[-+]?[0-9]|[ \\t]*[?？]|[ \\t]*$)");
  private static final Pattern KNOWN_COLOR=Pattern.compile("(?m)^[ \\t]*(WHITE|BLACK|IVORY|NAVY|BLUE|BEIGE|PINK|RED|GREEN|GREY|GRAY|MELANGE[ \\t]+(?:GREY|GRAY))[ \\t]*$");
  private IntakeText(){}
  public static final class Result {
@@ -27,7 +27,7 @@ public final class IntakeText {
  private static Set<String> fields(Pattern pattern,String text){Set<String> values=new LinkedHashSet<>();Matcher m=pattern.matcher(text);while(m.find())values.add(m.group(1).trim().replaceAll("[ \\t]+"," "));return values;}
  public static boolean isGarmentSpan(String text,int start,int end){Matcher m=GARMENT_SIZE.matcher(text);while(m.find())if(start<m.end(1)&&end>m.start(1))return true;return false;}
  private static boolean isLabelFieldSpan(String text,int start,int end){
-  for(Pattern field:new Pattern[]{SKU,COLOR,GARMENT_SIZE}){Matcher m=field.matcher(text);while(m.find())if(start<m.end(1)&&end>m.start(1))return true;}
+  for(Pattern field:new Pattern[]{SKU,COLOR,GARMENT_SIZE}){Matcher m=field.matcher(text);while(m.find())if(start<m.end(1)&&end>m.start(1)&&(field!=COLOR||start==m.start(1)))return true;}
   return false;
  }
  public static Result parse(String input){
@@ -39,7 +39,9 @@ public final class IntakeText {
   if(colors.isEmpty())colors=fields(KNOWN_COLOR,text);
   boolean conflict=false,malformed=false;int countFields=0;
   for(String line:text.split("\\r?\\n")){
-   String value=line.trim();Matcher m=COUNTS.matcher(value);List<String[]> row=new ArrayList<>();int end=0;boolean clean=true;
+   String value=line.trim();
+   if(value.matches("\\(?[ \\t]*(?:XL|S|M|L)(?:[ \\t]*[-/·][ \\t]*(?:XL|S|M|L))+[ \\t]*\\)?"))continue;
+   Matcher m=COUNTS.matcher(value);List<String[]> row=new ArrayList<>();int end=0;boolean clean=true;
    while(m.find()){
     if(!value.substring(end,m.start()).trim().matches("[,;/·]*")){clean=false;break;}
     row.add(new String[]{m.group(1),m.group(2)});end=m.end();
