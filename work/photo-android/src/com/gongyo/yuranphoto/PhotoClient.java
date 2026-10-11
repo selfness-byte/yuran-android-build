@@ -109,6 +109,57 @@ public final class PhotoClient {
    if(failure!=null){if(failure instanceof IOException)fence((IOException)failure);if(raw!=null&&unavailable==null&&confirmed==null){try{removeRaw(raw);}catch(Throwable cleanup){failure=prefer(failure,cleanup);}}throwFailure(failure);}return result;
   }
  }
+
+ /** Dedicated inbox preparation; never consumes or cancels the manual registration slot. */
+ public PhotoContract.RegisterRequest prepareCapture(String entryId,String generation,String sku,String color,byte[] bytes)throws IOException{
+  synchronized(lock){
+   ready();if(!uuid(entryId)||bytes==null||bytes.length==0||bytes.length>MAX_SOURCE_BYTES)throw new IOException("보관 사진을 확인해 주세요.");
+   PhotoContract.Compatibility current=compatibility();
+   if(!generation.equals(current.generation))throw new IOException("원래 유란노트 자료가 변경되었습니다. 사진 요청은 원래 자료에 남습니다.");
+   sku=PhotoContract.key(sku);color=PhotoContract.key(color);
+   if(sku.isEmpty()||sku.length()>80||color.isEmpty()||color.length()>60)throw new IOException("사진의 품번과 색상을 확인해 주세요.");
+   File directory=new File(files,"prepared");CheckedAtomicFile.directory(directory,io);File raw=new File(directory,entryId+".input");
+   try{
+    if(confirmed!=null&&raw.getPath().equals(confirmedPath))throw new IOException("다른 사진 등록이 이 파일을 사용 중입니다.");
+    CheckedAtomicFile prepared=new CheckedAtomicFile(raw,io);
+    try{prepared.readFully((int)MAX_SOURCE_BYTES,stored->{if(!Arrays.equals(stored,bytes))throw new IOException("입고 준비 사진 내용이 다릅니다. 원래 사진을 유지합니다.");});}
+    catch(CheckedAtomicFile.MissingFileException absent){prepared.write(bytes);}
+    checkImage(raw);
+   }catch(IOException e){fence(e);throw e;}
+   String uri="content://"+RuntimeIds.CAPTURE_AUTHORITY+PhotoContract.PREPARED_SOURCE_PATH_PREFIX+entryId+PhotoContract.PREPARED_SOURCE_SUFFIX;
+   return new PhotoContract.RegisterRequest(entryId,current.generation,current.revision,"","",sku,color,hex(digest().digest(bytes)),uri);
+  }
+ }
+ public PhotoContract.Reply captureReceipt(PhotoContract.RegisterRequest request)throws IOException{
+  synchronized(lock){ready();}compatibility();
+  Bundle b=new Bundle();b.putInt("protocolVersion",1);b.putString("requestId",request.requestId);b.putString("generation",request.generation);b.putString("fingerprint",PhotoContract.fingerprint(request));
+  return PhotoBundleCodec.readReply(call("getReceipt",b));
+ }
+ public PhotoContract.Reply registerCapture(PhotoContract.RegisterRequest request)throws IOException{
+  synchronized(lock){ready();validateCapture(request);}compatibility();
+  context.grantUriPermission(RuntimeIds.OWNER_PACKAGE,Uri.parse(request.sourceUri),Intent.FLAG_GRANT_READ_URI_PERMISSION);
+  return PhotoBundleCodec.readReply(call("registerPhoto",PhotoBundleCodec.registerRequest(request)));
+ }
+ private File capturePrepared(PhotoContract.RegisterRequest request)throws IOException{
+  String nonce=PhotoContract.preparedSourceNonce(request.sourceUri,RuntimeIds.CAPTURE_AUTHORITY);
+  if(nonce==null||!nonce.equals(request.requestId))throw new IOException("입고 사진 준비 식별자가 다릅니다.");
+  return new File(new File(files,"prepared"),nonce+".input");
+ }
+ private void validateCapture(PhotoContract.RegisterRequest request)throws IOException{
+  File raw=capturePrepared(request);MessageDigest digest=digest();long total=0;
+  try(InputStream input=io.openRead(raw)){byte[] block=new byte[32768];for(int n;(n=input.read(block))!=-1;){if(n==0)continue;if(n>MAX_SOURCE_BYTES-total)throw new IOException("입고 사진 크기 초과");total+=n;digest.update(block,0,n);}}
+  if(total==0||!hex(digest.digest()).equals(request.sourceSha256))throw new IOException("입고 준비 사진이 변경되었습니다. 원래 등록 결과를 확인해 주세요.");
+ }
+ /** Only invoked after both the delivery ACK and owning inbox entry are durable. */
+ public void cleanupCapture(PhotoContract.RegisterRequest request)throws IOException{
+  synchronized(lock){ready();try{
+   // The manual slot owns its bytes independently, even if a malformed caller reused an ID.
+   if(confirmed!=null&&confirmed.sourceUri.equals(request.sourceUri))throw new IOException("다른 사진 등록이 이 파일을 사용 중입니다.");
+   context.revokeUriPermission(Uri.parse(request.sourceUri),Intent.FLAG_GRANT_READ_URI_PERMISSION);
+   removeRaw(capturePrepared(request));
+  }catch(IOException e){fence(e);throw e;}}
+ }
+
  private void checkImage(File raw)throws IOException{
   byte[] head=new byte[8];try(InputStream in=io.openRead(raw)){int n=0;for(int x;n<8&&(x=in.read(head,n,8-n))!=-1;)n+=x;if(n<8||!((head[0]==(byte)255&&head[1]==(byte)216&&head[2]==(byte)255)||(head[0]==(byte)137&&head[1]==80&&head[2]==78&&head[3]==71&&head[4]==13&&head[5]==10&&head[6]==26&&head[7]==10)))throw new IOException("JPEG 또는 PNG 사진만 선택할 수 있습니다.");}
   BitmapFactory.Options options=new BitmapFactory.Options();options.inJustDecodeBounds=true;try(InputStream in=io.openRead(raw)){BitmapFactory.decodeStream(in,null,options);}if(options.outWidth<=0||options.outHeight<=0)throw new IOException("사진을 해독할 수 없습니다.");if((long)options.outWidth*options.outHeight>MAX_PIXELS)throw new IOException("사진은 4천만 화소 이하여야 합니다.");
