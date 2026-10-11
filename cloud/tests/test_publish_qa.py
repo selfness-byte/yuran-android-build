@@ -75,3 +75,49 @@ class PublishChecks(unittest.TestCase):
         for repo, ref in [(qa.REPO, "refs/heads/codex/yuran-repairs-20261011"), ("unrelated/project", "refs/heads/main")]:
             with self.assertRaises(ValueError):
                 qa.require_publish_target(repo, ref)
+
+    def test_interrupted_draft_resumes_without_second_creation(self):
+        from unittest.mock import patch
+        from contextlib import redirect_stdout
+        target = "c" * 40
+        data = {"yuran-note-qa.apk": b"synthetic note", "yuran-photo-qa.apk": b"synthetic photo"}
+        def asset(name):
+            return {"name": name, "size": len(data[name]), "state": "uploaded",
+                    "digest": "sha256:" + qa.sha(data[name]),
+                    "browser_download_url": "https://github.com/" + qa.REPO + "/releases/download/" + qa.TAG + "/" + name}
+        release = {"id": 7, "tag_name": qa.TAG, "target_commitish": target,
+                   "draft": True, "prerelease": True, "assets": [asset("yuran-note-qa.apk")],
+                   "upload_url": "https://uploads.github.com/repos/" + qa.REPO + "/releases/7/assets{?name,label}",
+                   "html_url": "https://github.com/" + qa.REPO + "/releases/tag/" + qa.TAG}
+        class Client:
+            creates = 0
+            uploads = 0
+            def json(self, path, method="GET", body=None, missing=False):
+                if path == "/git/ref/heads/main":
+                    return {"object": {"sha": target}}
+                if path.startswith("/git/ref/tags/") or path.startswith("/releases/tags/"):
+                    return None
+                if path.startswith("/releases?"):
+                    return [release]
+                if path == "/releases" and method == "POST":
+                    self.creates += 1
+                    raise AssertionError("Existing draft must be resumed")
+                if path == "/releases/7":
+                    if method == "PATCH":
+                        release.update(body)
+                    return release
+                raise AssertionError(path)
+            def request(self, url, method, body, media):
+                self.uploads += 1
+                name = qa.urllib.parse.parse_qs(qa.urllib.parse.urlsplit(url).query)["name"][0]
+                self.assert_body = body
+                value = asset(name)
+                release["assets"].append(value)
+                return io.BytesIO(json.dumps(value).encode())
+        client = Client()
+        environment = {"GITHUB_REPOSITORY": qa.REPO, "GITHUB_REF": "refs/heads/main", "GITHUB_SHA": target}
+        with patch.dict(qa.os.environ, environment), patch.object(qa, "APK_HASHES", {n: qa.sha(d) for n, d in data.items()}), patch.object(qa, "APK_SIZES", {n: len(d) for n, d in data.items()}), patch.object(qa.urllib.request, "urlopen", side_effect=lambda url, timeout: io.BytesIO(data[url.rsplit("/", 1)[1]])), redirect_stdout(io.StringIO()):
+            qa.publish(client, data)
+        self.assertEqual(client.creates, 0)
+        self.assertEqual(client.uploads, 1)
+        self.assertFalse(release["draft"])

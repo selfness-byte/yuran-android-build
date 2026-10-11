@@ -48,7 +48,7 @@ def require_matching_asset(asset, data):
 def validate_bundle(data, hashes=APK_HASHES, sizes=APK_SIZES):
     with zipfile.ZipFile(io.BytesIO(data)) as archive:
         names = archive.namelist()
-        require(len(names) == len(ALLOWED) and set(names) == ALLOWED, "Unexpected or duplicate artifact entries")
+        require(len(names) == len(ALLOWED) and set(names) == ALLOWED, "Unexpected or duplicate artifact entries: " + json.dumps(names, ensure_ascii=True))
         require(sum(i.file_size for i in archive.infolist()) < 64 * 1024 * 1024, "Artifact expands beyond the expected bound")
         files = {name: archive.read(name) for name in names}
     info = json.loads(files["BUILD-INFO.json"])

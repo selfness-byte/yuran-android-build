@@ -32,6 +32,7 @@ jobs:
       - name: Check rejection and resume boundaries
         run: python3 -m unittest discover -s cloud/tests -p 'test_publish_qa.py' -v
       - name: Verify the previously built APK pair
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 cloud/publish-qa.py --verify-only
