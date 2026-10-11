@@ -110,29 +110,15 @@ public final class LabelRecognition {
     }
 
 
-    /** Rejoin a size and a count only when they occupy the same visual row. */
+    /** Convert ML Kit lines without depending on Android geometry in the shared assembler. */
     static String intakeText(Text recognized) {
-        java.util.List<Text.Line> lines=new ArrayList<>();
-        for(Text.TextBlock block:recognized.getTextBlocks())lines.addAll(block.getLines());
-        java.util.Map<Integer,Integer> pairs=new java.util.HashMap<>();
-        java.util.Set<Integer> claimed=new java.util.HashSet<>();
-        for(int i=0;i<lines.size();i++){
-            String size=lines.get(i).getText().trim().toUpperCase(java.util.Locale.ROOT);
-            android.graphics.Rect a=lines.get(i).getBoundingBox();
-            if(!size.matches("S|M|L|XL")||a==null)continue;
-            int choice=-1;
-            for(int j=0;j<lines.size();j++){
-                if(i==j||!lines.get(j).getText().trim().matches("[0-9]{1,6}"))continue;
-                android.graphics.Rect b=lines.get(j).getBoundingBox();if(b==null)continue;
-                int overlap=Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top);
-                if(b.left<a.right||b.left-a.right>Math.max(a.height(),b.height())*3||overlap*2<Math.min(a.height(),b.height()))continue;
-                if(choice>=0){choice=-2;break;}choice=j;
-            }
-            if(choice>=0&&!claimed.contains(choice)){pairs.put(i,choice);claimed.add(choice);}
+        java.util.List<com.gongyo.photo.LabelTextLayout.Line> lines=new ArrayList<>();
+        for(Text.TextBlock block:recognized.getTextBlocks())for(Text.Line line:block.getLines()){
+            android.graphics.Rect box=line.getBoundingBox();
+            lines.add(box==null?new com.gongyo.photo.LabelTextLayout.Line(line.getText())
+                    :new com.gongyo.photo.LabelTextLayout.Line(line.getText(),box.left,box.top,box.right,box.bottom));
         }
-        StringBuilder out=new StringBuilder();
-        for(int i=0;i<lines.size();i++){if(claimed.contains(i))continue;if(out.length()>0)out.append('\n');out.append(lines.get(i).getText());Integer count=pairs.get(i);if(count!=null)out.append(' ').append(lines.get(count).getText());}
-        return out.toString();
+        return com.gongyo.photo.LabelTextLayout.intakeText(lines);
     }
 
     private static ArrayList<String> readBarcodes(Bitmap bitmap) {
