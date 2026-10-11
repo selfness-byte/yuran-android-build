@@ -121,3 +121,22 @@ class PublishChecks(unittest.TestCase):
         self.assertEqual(client.creates, 0)
         self.assertEqual(client.uploads, 1)
         self.assertFalse(release["draft"])
+
+    def test_known_v4_signature_sidecar_allowed(self):
+        self.assertEqual(set(self.check(self.fixture(extra="yuran-note-qa.apk.idsig"))), set(qa.ALLOWED))
+
+    def test_draft_lookup_reads_later_pages(self):
+        draft = {"id": 7, "tag_name": qa.TAG, "draft": True}
+        class Client:
+            def json(self, path):
+                if path.endswith("page=1"):
+                    return [{"tag_name": "unrelated-" + str(i)} for i in range(100)]
+                return [draft]
+        self.assertEqual(qa.find_release(Client()), draft)
+
+    def test_ambiguous_drafts_rejected(self):
+        class Client:
+            def json(self, path):
+                return [{"tag_name": qa.TAG, "id": 1}, {"tag_name": qa.TAG, "id": 2}]
+        with self.assertRaises(ValueError):
+            qa.find_release(Client())

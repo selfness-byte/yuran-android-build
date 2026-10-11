@@ -29,6 +29,7 @@ APK_SIZES = {"yuran-note-qa.apk": 451153, "yuran-photo-qa.apk": 53926046}
 PACKAGES = {"yuran-note-qa.apk": "com.gongyo.orderly.qa",
             "yuran-photo-qa.apk": "com.gongyo.yuranphoto.qa"}
 ALLOWED = set(APK_HASHES) | {"BUILD-INFO.json", "SHA256SUMS.txt", "읽어주세요.txt"}
+SIDECARS = {name + ".idsig" for name in APK_HASHES}
 API = "https://api.github.com/repos/" + REPO
 
 def sha(data):
@@ -48,9 +49,10 @@ def require_matching_asset(asset, data):
 def validate_bundle(data, hashes=APK_HASHES, sizes=APK_SIZES):
     with zipfile.ZipFile(io.BytesIO(data)) as archive:
         names = archive.namelist()
-        require(len(names) == len(ALLOWED) and set(names) == ALLOWED, "Unexpected or duplicate artifact entries: " + json.dumps(names, ensure_ascii=True))
+        require(len(names) == len(set(names)) and ALLOWED <= set(names) <= ALLOWED | SIDECARS,
+                "Unexpected or duplicate artifact entries: " + json.dumps(names, ensure_ascii=True))
         require(sum(i.file_size for i in archive.infolist()) < 64 * 1024 * 1024, "Artifact expands beyond the expected bound")
-        files = {name: archive.read(name) for name in names}
+        files = {name: archive.read(name) for name in ALLOWED}
     info = json.loads(files["BUILD-INFO.json"])
     require(info.get("commit") == SOURCE, "Artifact source revision differs")
     records = info.get("apks", [])
@@ -141,6 +143,20 @@ def verified_artifact(client):
     assets["yuran-qa-2026-10-11.zip"] = data
     return assets
 
+def find_release(client):
+    # Published-by-tag lookup does not discover upload-in-progress draft releases.
+    matches = []
+    for page in range(1, 101):
+        releases = client.json("/releases?per_page=100&page=" + str(page))
+        require(isinstance(releases, list), "Unexpected release listing")
+        matches.extend(release for release in releases if release.get("tag_name") == TAG)
+        if len(releases) < 100:
+            break
+    else:
+        raise ValueError("Release listing exceeded its bound")
+    require(len(matches) <= 1, "Multiple releases have the requested tag; refusing ambiguous publication")
+    return matches[0] if matches else None
+
 def publish(client, assets):
     require_publish_target(os.environ["GITHUB_REPOSITORY"], os.environ["GITHUB_REF"])
     target = os.environ["GITHUB_SHA"]
@@ -149,7 +165,7 @@ def publish(client, assets):
     tag = client.json("/git/ref/tags/" + TAG, missing=True)
     require(tag is None or tag["object"].get("type") == "commit" and tag["object"].get("sha") == target,
             "Release tag belongs to another revision")
-    release = client.json("/releases/tags/" + TAG, missing=True)
+    release = find_release(client)
     body = """유란노트·유란사진 별도 설치 시험판입니다. 기존 앱을 덮어쓰는 정식 업데이트가 아닙니다.
 
 1. yuran-note-qa.apk를 먼저 설치하고 yuran-photo-qa.apk를 설치하세요.
