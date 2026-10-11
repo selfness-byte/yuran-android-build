@@ -48,6 +48,14 @@ public final class WorkArchive {
         return false;
     }
 
+    /** Completion state is committed together with the matching archive entry. */
+    public static void setCompleted(StateCodec.State state, boolean completed) {
+        state.draft.completed = completed;
+        for (Inventory.Job saved : state.jobs) {
+            if (saved.id.equals(state.draft.id)) saved.completed = completed;
+        }
+    }
+
     private static void requireSpace(StateCodec.State state) {
         if (state.jobs.size() >= MAX_WORKS) {
             throw new IllegalArgumentException("보관함에 작업이 100개 있습니다. 필요 없는 작업을 삭제한 뒤 새 작업을 만들어 주세요.");

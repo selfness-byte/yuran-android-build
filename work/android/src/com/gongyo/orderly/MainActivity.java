@@ -636,7 +636,7 @@ public final class MainActivity extends Activity {
     private void toggleCompleted(){
         boolean next=!state.draft.completed;
         confirm(next?"작업 완료":"완료 취소",next?"현재 정리표를 완료하고 입력과 표 수정을 잠급니다.":"완료 잠금을 해제하고 표를 다시 수정합니다.",()->{
-            if(!commitChange(()->{state.draft.completed=next;for(Inventory.Job saved:state.jobs)if(saved.id.equals(state.draft.id))saved.completed=next;}))return;
+            if(!commitChange(()->{WorkArchive.setCompleted(state,next);}))return;
             render();toast(next?"작업을 완료하고 잠갔습니다.":"편집 잠금을 해제했습니다.");
         });
     }

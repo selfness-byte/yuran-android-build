@@ -1,0 +1,75 @@
+name: Yuran menu and sync verification
+on:
+  push:
+    branches: [codex/yuran-menu-sync-update-20261012]
+permissions:
+  contents: read
+concurrency:
+  group: yuran-menu-sync-verification
+  cancel-in-progress: false
+jobs:
+  regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [existing, note, sync]
+    steps:
+      - name: Read the exact source revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin https://github.com/selfness-byte/yuran-android-build.git
+          git fetch --no-tags --depth=1 origin "$GITHUB_SHA"
+          git checkout --detach FETCH_HEAD
+      - name: Run synthetic regression tests
+        shell: bash
+        env:
+          QA_SUITE: ${{ matrix.suite }}
+        run: bash cloud/test-regressions.sh "$QA_SUITE"
+  compile:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Read the exact source revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin https://github.com/selfness-byte/yuran-android-build.git
+          git fetch --no-tags --depth=1 origin "$GITHUB_SHA"
+          git checkout --detach FETCH_HEAD
+      - name: Compile note without signing
+        shell: bash
+        run: env JAVA_HOME="$JAVA_HOME_17_X64" ANDROID_SDK_ROOT="$ANDROID_HOME" bash cloud/build-qa.sh
+      - name: Hydrate pinned photo dependencies
+        shell: bash
+        run: python3 cloud/hydrate-photo-deps.py
+      - name: Compile photo without signing
+        shell: bash
+        run: env JAVA_HOME="$JAVA_HOME_17_X64" ANDROID_SDK_ROOT="$ANDROID_HOME" bash work/photo-android/build.sh outputs/yuran-photo-unsigned-qa.apk
+  korean_dependency_probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Resolve pinned Korean OCR model in a disposable runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin https://github.com/selfness-byte/yuran-android-build.git
+          git fetch --no-tags --depth=1 origin "$GITHUB_SHA"
+          git checkout --detach FETCH_HEAD
+          python3 - <<'PY'
+          import importlib.util
+          spec=importlib.util.spec_from_file_location("mlkit", "work/photo-android/tools/prepare_mlkit.py")
+          mlkit=importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(mlkit)
+          mlkit.ROOT=("com.google.mlkit", "text-recognition-korean", "16.0.1")
+          mlkit.resolve()
+          print("KOREAN_LOCK_BEGIN")
+          print(mlkit.LOCK.read_text())
+          print("KOREAN_LOCK_END")
+          PY
