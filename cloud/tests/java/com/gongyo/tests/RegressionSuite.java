@@ -1,6 +1,8 @@
 package com.gongyo.tests;
 import android.os.Bundle;
 import com.gongyo.orderly.Inventory;
+import com.gongyo.orderly.StateCodec;
+import com.gongyo.orderly.InventoryRepository;
 import com.gongyo.yuranphoto.LabelMatcher;
 import com.gongyo.yuranphoto.PhotoClient;
 import java.lang.reflect.*;
@@ -22,6 +24,15 @@ public final class RegressionSuite {
  }
  static Object field(Object result,String name)throws Exception{return result.getClass().getField(name).get(result);}
  static void quantities(Object result,long... expected)throws Exception{long[] actual=(long[])field(result,"quantities");if(!Arrays.equals(expected,actual))throw new AssertionError("Expected "+Arrays.toString(expected)+" but received "+Arrays.toString(actual));}
+
+ static Object register(InventoryRepository repo,String id,String hash,String sku,String color,long[] q)throws Exception{
+  Class<?> type;try{type=Class.forName("com.gongyo.orderly.IntakeRegistration");}catch(ClassNotFoundException missing){throw new AssertionError("Atomic intake registration is not implemented");}
+  return type.getMethod("register",InventoryRepository.class,String.class,String.class,String.class,String.class,String.class,long[].class).invoke(null,repo,repo.snapshot().generation,id,hash,sku,color,q);
+ }
+ static InventoryRepository repository()throws Exception{return new InventoryRepository(new StateCodec.State(),s->{});}
+ static String uuid(){return UUID.randomUUID().toString();}
+ static final String HASH=String.join("",Collections.nCopies(64,"a"));
+
  public static void main(String[] args){
   test("selected SKU includes every color and size",()->{
    List<Inventory.Row> rows=Arrays.asList(row("QA100",1,2,3,4),row(" qa100 ",2,0,1,3),row("QA1000",99,99,99,99));
@@ -57,6 +68,46 @@ public final class RegressionSuite {
   test("printed garment size alone does not change stock",()->{Object r=intake("STYLE: QA100\nCOLOR: BLUE\nSIZE: 95(M)\n(S-M-L-XL)\nPRICE: 49000");equal(false,field(r,"ready"));quantities(r,0,0,0,0);});
   test("missing color requires review",()->equal(false,field(intake("STYLE: QA100\nM 2"),"ready")));
   test("conflicting product numbers require review",()->equal(false,field(intake("STYLE: QA100\nSTYLE: QA200\nCOLOR: BLUE\nM 2"),"ready")));
+
+  test("intake registers four sizes exactly once across restart",()->{
+   InventoryRepository repo=repository();String id=uuid();
+   equal("OK",field(register(repo,id,HASH,"QA100","BLUE",new long[]{2,3,4,6}),"status"));
+   byte[] saved=StateCodec.encode(repo.snapshot().stateCopy);
+   InventoryRepository restart=new InventoryRepository(StateCodec.decode(saved),s->{});
+   equal("OK",field(register(restart,id,HASH,"QA100","BLUE",new long[]{2,3,4,6}),"status"));
+   equal(15L,Inventory.grandTotal(restart.snapshot().stateCopy.draft.rows));
+   equal(1L,restart.snapshot().revision);
+  });
+  test("same photo with a new callback does not duplicate intake",()->{
+   InventoryRepository repo=repository();register(repo,uuid(),HASH,"QA100","BLUE",new long[]{0,2,0,0});
+   equal("OK",field(register(repo,uuid(),HASH,"QA100","BLUE",new long[]{0,2,0,0}),"status"));
+   equal(2L,Inventory.grandTotal(repo.snapshot().stateCopy.draft.rows));
+  });
+  test("same photo with changed counts is rejected",()->{
+   InventoryRepository repo=repository();String id=uuid();register(repo,id,HASH,"QA100","BLUE",new long[]{0,2,0,0});
+   equal("CONFLICT",field(register(repo,id,HASH,"QA100","BLUE",new long[]{0,9,0,0}),"status"));
+   equal(2L,Inventory.grandTotal(repo.snapshot().stateCopy.draft.rows));
+  });
+  test("failed persistence publishes no intake or receipt",()->{
+   InventoryRepository repo=new InventoryRepository(new StateCodec.State(),s->{throw new java.io.IOException("synthetic disk failure");});
+   try{register(repo,uuid(),HASH,"QA100","BLUE",new long[]{0,2,0,0});throw new AssertionError("Expected persistence failure");}
+   catch(InvocationTargetException expected){if(!(expected.getCause() instanceof java.io.IOException))throw expected;}
+   equal(0L,Inventory.grandTotal(repo.snapshot().stateCopy.draft.rows));equal(0L,repo.snapshot().revision);
+  });
+  test("intake overflow leaves every size unchanged",()->{
+   StateCodec.State s=new StateCodec.State();Inventory.Row r=row("QA100",0,999999,0,0);r.color=r.sourceColor="BLUE";s.draft.rows.add(r);
+   InventoryRepository repo=new InventoryRepository(s,v->{});
+   equal("INVALID_REQUEST",field(register(repo,uuid(),HASH,"QA100","BLUE",new long[]{2,1,0,0}),"status"));
+   equal(999999L,Inventory.grandTotal(repo.snapshot().stateCopy.draft.rows));equal(0L,repo.snapshot().revision);
+  });
+  test("completed stock is not changed by camera intake",()->{
+   StateCodec.State s=new StateCodec.State();s.draft.completed=true;InventoryRepository repo=new InventoryRepository(s,v->{});
+   equal("CONFLICT",field(register(repo,uuid(),HASH,"QA100","BLUE",new long[]{2,0,0,0}),"status"));equal(0L,repo.snapshot().revision);
+  });
+  test("zero quantity cannot be confirmed as new intake",()->{
+   InventoryRepository repo=repository();equal("INVALID_REQUEST",field(register(repo,uuid(),HASH,"QA100","BLUE",new long[4]),"status"));equal(0L,repo.snapshot().revision);
+  });
+
   System.out.println("RESULT "+passed+" passed; "+failed+" failed");
   if(failed>0)System.exit(1);
  }

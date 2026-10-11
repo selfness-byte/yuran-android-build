@@ -21,10 +21,10 @@ with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
 url = "https://repo.maven.apache.org/maven2/com/google/zxing/core/3.5.4/core-3.5.4.jar"
 with urllib.request.urlopen(url, timeout=60) as response:
     data = response.read(5_000_000)
-with urllib.request.urlopen(url + ".sha256", timeout=60) as response:
+with urllib.request.urlopen(url + ".sha1", timeout=60) as response:
     expected = response.read(200).decode().strip()
-if hashlib.sha256(data).hexdigest() != expected:
+if hashlib.sha1(data).hexdigest() != expected:
     raise ValueError("ZXing checksum mismatch")
 target = pathlib.Path("work/photo-android/libs/zxing-core-3.5.4.jar")
 target.write_bytes(data)
-print("Hydrated", len(lock["artifacts"]), "locked OCR dependencies; ZXing SHA256", expected)
+print("Hydrated", len(lock["artifacts"]), "locked OCR dependencies; ZXing SHA256", hashlib.sha256(data).hexdigest())
