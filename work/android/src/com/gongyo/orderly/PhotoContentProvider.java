@@ -62,7 +62,9 @@ public final class PhotoContentProvider extends ContentProvider {
    InventoryRepository repo=RepositoryOwner.get(owner());
    if(method.equals("getCompatibility")){
     InventoryRepository.Snapshot s=repo.snapshot();int code=owner().getPackageManager().getPackageInfo(RuntimeIds.OWNER_PACKAGE,0).versionCode;
-    return PhotoBundleCodec.compatibility(new PhotoContract.Compatibility(1,s.generation,s.revision,code));
+    Bundle result=PhotoBundleCodec.compatibility(new PhotoContract.Compatibility(1,s.generation,s.revision,code));
+    result.putString("targetWorkId",s.stateCopy.draft.completed?"":s.stateCopy.draft.stockSessionId);
+    PhotoBundleCodec.response(result);return result;
    }
    if(method.equals("beginIntake")){
     InventoryRepository.Snapshot current=IntakeRegistration.begin(repo);

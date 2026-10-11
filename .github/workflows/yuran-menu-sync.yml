@@ -28,7 +28,9 @@ jobs:
         shell: bash
         env:
           QA_SUITE: ${{ matrix.suite }}
-        run: bash cloud/test-regressions.sh "$QA_SUITE"
+        run: |
+          bash cloud/test-regressions.sh "$QA_SUITE"
+          if [[ "$QA_SUITE" == note ]]; then python3 cloud/test-note-refresh.py; fi
   compile:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
