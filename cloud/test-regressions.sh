@@ -13,5 +13,5 @@ while IFS= read -r -d '' qa_source; do qa_sources+=("$qa_source"); done < <(find
  work/android/src/com/gongyo/orderly/PhotoLimits.java \
  work/photo-android/src/com/gongyo/yuranphoto/LabelMatcher.java \
  "${qa_sources[@]}"
-"$qa_jdk/bin/java" -cp "$qa_classes" com.gongyo.tests.RegressionSuite
 "$qa_jdk/bin/java" -Djava.awt.headless=true -cp "$qa_classes" com.gongyo.orderly.ExportPhotoChecks
+"$qa_jdk/bin/java" -cp "$qa_classes" com.gongyo.tests.RegressionSuite
