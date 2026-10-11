@@ -28,3 +28,12 @@ jobs:
         run: |
           set -euo pipefail
           env JAVA_HOME="$JAVA_HOME_17_X64" ANDROID_SDK_ROOT="$ANDROID_HOME" bash cloud/build-qa.sh
+      - name: Inspect published package compatibility
+        shell: bash
+        run: python3 cloud/inspect-release.py
+      - name: Hydrate pinned photo build dependencies
+        shell: bash
+        run: python3 cloud/hydrate-photo-deps.py
+      - name: Compile photo Android QA app
+        shell: bash
+        run: env JAVA_HOME="$JAVA_HOME_17_X64" ANDROID_SDK_ROOT="$ANDROID_HOME" bash work/photo-android/build.sh outputs/yuran-photo-unsigned-qa.apk
