@@ -21,9 +21,23 @@ public final class IntakeRegistration {
    if(!e.getKey().equals(r.sourceHash)||!ids.add(r.requestId)||r.revision<1||r.revision>revision)throw new IOException("입고 기록 식별자가 올바르지 않습니다.");
   }
  }
- public static Result register(InventoryRepository repo,String generation,String id,String hash,String sku,String color,long[] counts)throws IOException{
+ /** Freeze the current work before capture, under the same lock used by registration. */
+ public static InventoryRepository.Snapshot begin(InventoryRepository repo)throws IOException{
+  final InventoryRepository.Snapshot[] result={null};
+  repo.exclusive(()->{
+   InventoryRepository.Snapshot current=repo.snapshot();
+   if(current.stateCopy.draft.completed)throw new IOException("현재 작업이 완료 상태입니다. 새 작업을 열어 주세요.");
+   if(current.stateCopy.draft.stockSessionId.isEmpty()){
+    InventoryRepository.CommitResult committed=repo.commit(current.generation,current.revision,(state,next)->state.draft.stockSessionId=UUID.randomUUID().toString());
+    if(!committed.committed)throw new IOException(committed.conflictReason);
+    current=committed.latestSnapshot;
+   }
+   result[0]=current;
+  });return result[0];
+ }
+ public static Result register(InventoryRepository repo,String generation,String targetWorkId,String id,String hash,String sku,String color,long[] counts)throws IOException{
   final String fingerprint;
-  try{PhotoCatalog.uuid(id);fingerprint=IntakeContract.fingerprint(generation,hash,sku,color,counts);}
+  try{PhotoCatalog.uuid(id);fingerprint=IntakeContract.fingerprint(generation,targetWorkId,hash,sku,color,counts);}
   catch(IOException invalid){return new Result(PhotoContract.INVALID_REQUEST,invalid.getMessage(),repo.snapshot());}
   final String product=PhotoContract.key(sku),shade=PhotoContract.key(color);final long[] owned=counts.clone();final Result[] answer={null};
   repo.exclusive(()->{
@@ -31,6 +45,7 @@ public final class IntakeRegistration {
    if(!current.generation.equals(generation)){answer[0]=new Result(PhotoContract.CONFLICT,"자료가 복원되거나 바뀌었습니다. 입고 사진을 다시 확인해 주세요.",current);return;}
    Receipt existing=current.stateCopy.intakeReceipts.get(hash);
    if(existing!=null){answer[0]=new Result(existing.fingerprint.equals(fingerprint)?PhotoContract.OK:PhotoContract.CONFLICT,existing.fingerprint.equals(fingerprint)?"이미 등록된 사진입니다. 수량을 다시 더하지 않았습니다.":"같은 사진의 등록 내용이 다릅니다. 유란노트에서 기존 수량을 확인해 주세요.",current);return;}
+   if(!targetWorkId.equals(current.stateCopy.draft.stockSessionId)){answer[0]=new Result(PhotoContract.CONFLICT,"현재 입고 작업이 바뀌었습니다. 사진의 대상 작업을 확인해 주세요.",current);return;}
    for(Receipt receipt:current.stateCopy.intakeReceipts.values())if(receipt.requestId.equals(id)){answer[0]=new Result(PhotoContract.CONFLICT,"입고 요청 식별자가 다른 사진에 사용됐습니다.",current);return;}
    if(current.stateCopy.draft.completed){answer[0]=new Result(PhotoContract.CONFLICT,"현재 작업이 완료 상태입니다. 유란노트에서 새 작업을 열어 주세요.",current);return;}
    if(current.stateCopy.intakeReceipts.size()>=MAX_RECEIPTS){answer[0]=new Result(PhotoContract.LIMIT_REACHED,"입고 기록이 가득 찼습니다. 사진은 보관됩니다.",current);return;}

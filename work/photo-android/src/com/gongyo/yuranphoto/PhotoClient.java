@@ -52,9 +52,17 @@ public final class PhotoClient {
   query=PhotoContract.key(query);compatibility();
   if(query.length()>80||offset<0)throw new IOException("검색 입력을 확인해 주세요.");Bundle b=new Bundle();b.putInt("protocolVersion",1);b.putString("query",query);b.putInt("offset",offset);b.putInt("pageSize",50);if(noteOnly)b.putString("scope","note");if(offset>0){b.putString("generation",generation);b.putLong("revision",revision);}Bundle result=call("getCatalogPage",b);PhotoBundleCodec.response(result);return result;
  }
- public Bundle registerIntake(String generation,String requestId,String sourceHash,String sku,String color,long[] quantities)throws IOException{
-  compatibility();IntakeContract.fingerprint(generation,sourceHash,sku,color,quantities);
-  Bundle input=new Bundle();input.putInt("protocolVersion",1);input.putString("generation",generation);input.putString("requestId",requestId);input.putString("sourceSha256",sourceHash);input.putString("sku",sku);input.putString("sourceColor",color);input.putString("quantities",IntakeContract.counts(quantities));PhotoBundleCodec.request(input,"registerIntake");
+ public Bundle beginIntake()throws IOException{
+  compatibility();Bundle input=new Bundle();input.putInt("protocolVersion",1);PhotoBundleCodec.request(input,"beginIntake");
+  Bundle reply=call("beginIntake",input);PhotoBundleCodec.response(reply);
+  if(!PhotoContract.OK.equals(reply.getString("status")))throw new IOException(reply.getString("reason","입고할 작업을 확인해 주세요."));
+  String target=reply.getString("targetWorkId","");
+  if(!uuid(target)||!uuid(reply.getString("generation")))throw new IOException("입고할 작업 식별자가 없습니다.");
+  return reply;
+ }
+ public Bundle registerIntake(String generation,String targetWorkId,String requestId,String sourceHash,String sku,String color,long[] quantities)throws IOException{
+  compatibility();IntakeContract.fingerprint(generation,targetWorkId,sourceHash,sku,color,quantities);
+  Bundle input=new Bundle();input.putInt("protocolVersion",1);input.putString("generation",generation);input.putString("targetWorkId",targetWorkId);input.putString("requestId",requestId);input.putString("sourceSha256",sourceHash);input.putString("sku",sku);input.putString("sourceColor",color);input.putString("quantities",IntakeContract.counts(quantities));PhotoBundleCodec.request(input,"registerIntake");
   Bundle reply=call("registerIntake",input);PhotoBundleCodec.response(reply);return reply;
  }
  public String stockSummary(String sku)throws IOException{

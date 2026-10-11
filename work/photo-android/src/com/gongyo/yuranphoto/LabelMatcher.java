@@ -140,7 +140,10 @@ public final class LabelMatcher {
     }
     private static List<SkuHit> findSkus(Ocr text,Map<String,List<Bundle>> bySku) {
         List<SkuHit> found=new ArrayList<SkuHit>();
+        Set<String> explicitSkus=new LinkedHashSet<String>();Matcher explicit=EXPLICIT_SKU.matcher(text.text);
+        while(explicit.find())explicitSkus.add(PhotoContract.key(explicit.group(1)));
         for(Map.Entry<String,List<Bundle>> entry:bySku.entrySet()) {
+            if(!explicitSkus.isEmpty()&&!explicitSkus.contains(entry.getKey()))continue;
             String key=flat(entry.getKey());if(key.isEmpty())continue;int at=-1;
             while((at=text.flat.indexOf(key,at+1))>=0) {
                 int start=text.positions.get(at),end=text.positions.get(at+key.length()-1)+1;

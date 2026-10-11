@@ -26,8 +26,8 @@ public final class PhotoContentProvider extends ContentProvider {
  }
  @Override public Bundle call(String method,String arg,Bundle extras){
   // Authorization precedes all Bundle deserialization, including rejected methods/payloads.
-  authorize("registerPhoto".equals(method)||"registerBarcode".equals(method)||"registerIntake".equals(method)?RuntimeIds.WRITE_PHOTOS:RuntimeIds.READ_PHOTOS);
-  if(!Arrays.asList("getCompatibility","getCatalogPage","getReceipt","registerPhoto","registerBarcode","lookupBarcode","registerIntake","getStock").contains(method))throw new UnsupportedOperationException("Unknown photo method");
+  authorize("registerPhoto".equals(method)||"registerBarcode".equals(method)||"registerIntake".equals(method)||"beginIntake".equals(method)?RuntimeIds.WRITE_PHOTOS:RuntimeIds.READ_PHOTOS);
+  if(!Arrays.asList("getCompatibility","getCatalogPage","getReceipt","registerPhoto","registerBarcode","lookupBarcode","registerIntake","beginIntake","getStock").contains(method))throw new UnsupportedOperationException("Unknown photo method");
   PhotoContract.RegisterRequest parsed=null;Uri source=null;
   try{
    if(arg!=null)throw new IllegalArgumentException("Photo call arg forbidden");
@@ -42,7 +42,7 @@ public final class PhotoContentProvider extends ContentProvider {
     if(extras.containsKey("details")&&!"label".equals(PhotoBundleCodec.string(extras,"details")))throw new IllegalArgumentException("Photo page details");
     if(offset>0||extras.containsKey("generation")||extras.containsKey("revision")){PhotoCatalog.uuid(PhotoBundleCodec.string(extras,"generation"));if(PhotoBundleCodec.number(extras,"revision")<0)throw new IllegalArgumentException("Photo page revision");}
    }else if(method.equals("registerIntake")){
-    PhotoCatalog.uuid(PhotoBundleCodec.string(extras,"requestId"));IntakeContract.fingerprint(PhotoBundleCodec.string(extras,"generation"),PhotoBundleCodec.string(extras,"sourceSha256"),PhotoBundleCodec.string(extras,"sku"),PhotoBundleCodec.string(extras,"sourceColor"),IntakeContract.counts(PhotoBundleCodec.string(extras,"quantities")));
+    PhotoCatalog.uuid(PhotoBundleCodec.string(extras,"requestId"));IntakeContract.fingerprint(PhotoBundleCodec.string(extras,"generation"),PhotoBundleCodec.string(extras,"targetWorkId"),PhotoBundleCodec.string(extras,"sourceSha256"),PhotoBundleCodec.string(extras,"sku"),PhotoBundleCodec.string(extras,"sourceColor"),IntakeContract.counts(PhotoBundleCodec.string(extras,"quantities")));
    }else if(method.equals("getStock")){PhotoCatalog.text(PhotoBundleCodec.string(extras,"sku"),80);
    }else if(method.equals("getReceipt")){PhotoCatalog.uuid(PhotoBundleCodec.string(extras,"requestId"));PhotoCatalog.uuid(PhotoBundleCodec.string(extras,"generation"));PhotoCatalog.hash(PhotoBundleCodec.string(extras,"fingerprint"));}
    else if(method.equals("lookupBarcode")||method.equals("registerBarcode")){
@@ -64,6 +64,11 @@ public final class PhotoContentProvider extends ContentProvider {
     InventoryRepository.Snapshot s=repo.snapshot();int code=owner().getPackageManager().getPackageInfo(RuntimeIds.OWNER_PACKAGE,0).versionCode;
     return PhotoBundleCodec.compatibility(new PhotoContract.Compatibility(1,s.generation,s.revision,code));
    }
+   if(method.equals("beginIntake")){
+    InventoryRepository.Snapshot current=IntakeRegistration.begin(repo);
+    Bundle result=PhotoBundleCodec.base(PhotoContract.OK,current.generation,current.revision,"");
+    result.putString("targetWorkId",current.stateCopy.draft.stockSessionId);PhotoBundleCodec.response(result);return result;
+   }
    if(method.equals("getStock")){
     InventoryRepository.Snapshot current=repo.snapshot();String sku=PhotoBundleCodec.string(extras,"sku");StringBuilder summary=new StringBuilder();int matched=0;
     for(Inventory.Row row:current.stateCopy.draft.rows)if(PhotoContract.sameKey(sku,row.sku)){matched++;if(summary.length()<700)summary.append(row.color).append("  S ").append(row.quantities[0]).append(" · M ").append(row.quantities[1]).append(" · L ").append(row.quantities[2]).append(" · XL ").append(row.quantities[3]).append("\n");}
@@ -71,7 +76,7 @@ public final class PhotoContentProvider extends ContentProvider {
     Bundle stock=PhotoBundleCodec.base(PhotoContract.OK,current.generation,current.revision,"");stock.putString("stockSummary",summary.toString());PhotoBundleCodec.response(stock);return stock;
    }
    if(method.equals("registerIntake")){
-    IntakeRegistration.Result result=IntakeRegistration.register(repo,PhotoBundleCodec.string(extras,"generation"),PhotoBundleCodec.string(extras,"requestId"),PhotoBundleCodec.string(extras,"sourceSha256"),PhotoBundleCodec.string(extras,"sku"),PhotoBundleCodec.string(extras,"sourceColor"),IntakeContract.counts(PhotoBundleCodec.string(extras,"quantities")));
+    IntakeRegistration.Result result=IntakeRegistration.register(repo,PhotoBundleCodec.string(extras,"generation"),PhotoBundleCodec.string(extras,"targetWorkId"),PhotoBundleCodec.string(extras,"requestId"),PhotoBundleCodec.string(extras,"sourceSha256"),PhotoBundleCodec.string(extras,"sku"),PhotoBundleCodec.string(extras,"sourceColor"),IntakeContract.counts(PhotoBundleCodec.string(extras,"quantities")));
     if(PhotoContract.OK.equals(result.status))owner().getContentResolver().notifyChange(Uri.parse("content://"+RuntimeIds.PHOTO_AUTHORITY),null);
     return PhotoBundleCodec.base(result.status,result.snapshot.generation,result.snapshot.revision,result.reason);
    }

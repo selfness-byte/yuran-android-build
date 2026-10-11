@@ -27,9 +27,9 @@ public final class RegressionSuite {
 
  static Object register(InventoryRepository repo,String id,String hash,String sku,String color,long[] q)throws Exception{
   Class<?> type;try{type=Class.forName("com.gongyo.orderly.IntakeRegistration");}catch(ClassNotFoundException missing){throw new AssertionError("Atomic intake registration is not implemented");}
-  return type.getMethod("register",InventoryRepository.class,String.class,String.class,String.class,String.class,String.class,long[].class).invoke(null,repo,repo.snapshot().generation,id,hash,sku,color,q);
+  return type.getMethod("register",InventoryRepository.class,String.class,String.class,String.class,String.class,String.class,String.class,long[].class).invoke(null,repo,repo.snapshot().generation,repo.snapshot().stateCopy.draft.stockSessionId,id,hash,sku,color,q);
  }
- static InventoryRepository repository()throws Exception{return new InventoryRepository(new StateCodec.State(),s->{});}
+ static InventoryRepository repository()throws Exception{StateCodec.State s=new StateCodec.State();s.draft.stockSessionId=uuid();return new InventoryRepository(s,v->{});}
  static String uuid(){return UUID.randomUUID().toString();}
  static final String HASH=String.join("",Collections.nCopies(64,"a"));
 
@@ -89,19 +89,19 @@ public final class RegressionSuite {
    equal(2L,Inventory.grandTotal(repo.snapshot().stateCopy.draft.rows));
   });
   test("failed persistence publishes no intake or receipt",()->{
-   InventoryRepository repo=new InventoryRepository(new StateCodec.State(),s->{throw new java.io.IOException("synthetic disk failure");});
+   InventoryRepository repo=new InventoryRepository(repository().snapshot().stateCopy,s->{throw new java.io.IOException("synthetic disk failure");});
    try{register(repo,uuid(),HASH,"QA100","BLUE",new long[]{0,2,0,0});throw new AssertionError("Expected persistence failure");}
    catch(InvocationTargetException expected){if(!(expected.getCause() instanceof java.io.IOException))throw expected;}
    equal(0L,Inventory.grandTotal(repo.snapshot().stateCopy.draft.rows));equal(0L,repo.snapshot().revision);
   });
   test("intake overflow leaves every size unchanged",()->{
-   StateCodec.State s=new StateCodec.State();Inventory.Row r=row("QA100",0,999999,0,0);r.color=r.sourceColor="BLUE";s.draft.rows.add(r);
+   StateCodec.State s=new StateCodec.State();s.draft.stockSessionId=uuid();Inventory.Row r=row("QA100",0,999999,0,0);r.color=r.sourceColor="BLUE";s.draft.rows.add(r);
    InventoryRepository repo=new InventoryRepository(s,v->{});
    equal("INVALID_REQUEST",field(register(repo,uuid(),HASH,"QA100","BLUE",new long[]{2,1,0,0}),"status"));
    equal(999999L,Inventory.grandTotal(repo.snapshot().stateCopy.draft.rows));equal(0L,repo.snapshot().revision);
   });
   test("completed stock is not changed by camera intake",()->{
-   StateCodec.State s=new StateCodec.State();s.draft.completed=true;InventoryRepository repo=new InventoryRepository(s,v->{});
+   StateCodec.State s=new StateCodec.State();s.draft.stockSessionId=uuid();s.draft.completed=true;InventoryRepository repo=new InventoryRepository(s,v->{});
    equal("CONFLICT",field(register(repo,uuid(),HASH,"QA100","BLUE",new long[]{2,0,0,0}),"status"));equal(0L,repo.snapshot().revision);
   });
   test("zero quantity cannot be confirmed as new intake",()->{
@@ -128,6 +128,59 @@ public final class RegressionSuite {
    equal(false,observe.invoke(gate,"",2200L));equal(false,observe.invoke(gate,"",3000L));
    equal(false,observe.invoke(gate,"QA100",3200L));equal(true,observe.invoke(gate,"QA100",3700L));
    saved.invoke(gate,"QA100");equal(false,observe.invoke(gate,"QA200",4200L));equal(true,observe.invoke(gate,"QA200",4700L));
+  });
+  test("malformed and oversized quantities block partial intake",()->{
+   for(String value:new String[]{"M1000000","M -3","M+3","M3/4","M2?","S2 M-3"})
+    equal(false,field(intake("STYLE: QA100\nCOLOR: BLUE\nS2\n"+value),"ready"));
+   equal(true,field(intake("STYLE: QA100\nCOLOR: BLUE\nS2 / M3 / L4"),"ready"));
+  });
+  test("color ends at inline multilingual annotation",()->{
+   for(String value:new String[]{"SIZE: M","PRICE: 49000","QTY: 2","호칭: 95(M)","尺码: M"})
+    equal("MELANGE GREY",field(intake("STYLE: QA100\nCOLOR: MELANGE GREY "+value+"\nM2"),"color"));
+  });
+  test("begin freezes one work atomically and persistence failure leaves it blank",()->{
+   InventoryRepository repo=new InventoryRepository(new StateCodec.State(),v->{});
+   InventoryRepository.Snapshot first=com.gongyo.orderly.IntakeRegistration.begin(repo);
+   equal(false,first.stateCopy.draft.stockSessionId.isEmpty());equal(1L,first.revision);
+   equal(first.stateCopy.draft.stockSessionId,com.gongyo.orderly.IntakeRegistration.begin(repo).stateCopy.draft.stockSessionId);
+   equal(1L,repo.snapshot().revision);
+   InventoryRepository failing=new InventoryRepository(new StateCodec.State(),v->{throw new java.io.IOException("synthetic");});
+   try{com.gongyo.orderly.IntakeRegistration.begin(failing);throw new AssertionError("Expected failure");}catch(java.io.IOException expected){}
+   equal("",failing.snapshot().stateCopy.draft.stockSessionId);equal(0L,failing.snapshot().revision);
+   repo.commit(first.generation,first.revision,(state,next)->state.draft.completed=true);
+   try{com.gongyo.orderly.IntakeRegistration.begin(repo);throw new AssertionError("Expected completed conflict");}catch(java.io.IOException expected){}
+  });
+  test("delayed request cannot land in another work but committed response retry succeeds",()->{
+   InventoryRepository repo=repository();InventoryRepository.Snapshot a=repo.snapshot();String id=uuid(),target=a.stateCopy.draft.stockSessionId;
+   equal("OK",com.gongyo.orderly.IntakeRegistration.register(repo,a.generation,target,id,HASH,"QA100","BLUE",new long[]{0,2,0,0}).status);
+   InventoryRepository.Snapshot saved=repo.snapshot();repo.commit(saved.generation,saved.revision,(state,next)->{state.draft=new Inventory.Job();state.draft.stockSessionId=uuid();});
+   long revision=repo.snapshot().revision;
+   equal("OK",com.gongyo.orderly.IntakeRegistration.register(repo,a.generation,target,id,HASH,"QA100","BLUE",new long[]{0,2,0,0}).status);
+   equal("CONFLICT",com.gongyo.orderly.IntakeRegistration.register(repo,a.generation,target,uuid(),HASH.replace('a','b'),"QA200","BLUE",new long[]{0,2,0,0}).status);
+   equal("CONFLICT",field(register(repo,uuid(),HASH,"QA100","BLUE",new long[]{0,2,0,0}),"status"));
+   equal(revision,repo.snapshot().revision);equal(0L,Inventory.grandTotal(repo.snapshot().stateCopy.draft.rows));
+  });
+  test("restore retains receipts rejects old generation and changed content",()->{
+   InventoryRepository repo=repository();register(repo,uuid(),HASH,"QA100","BLUE",new long[]{0,2,0,0});
+   InventoryRepository.Snapshot old=repo.snapshot();repo.restore(old.generation,old.revision,old.stateCopy);
+   equal("CONFLICT",com.gongyo.orderly.IntakeRegistration.register(repo,old.generation,old.stateCopy.draft.stockSessionId,uuid(),HASH,"QA100","BLUE",new long[]{0,2,0,0}).status);
+   equal("CONFLICT",field(register(repo,uuid(),HASH,"QA100","BLUE",new long[]{0,3,0,0}),"status"));
+   equal("OK",field(register(repo,uuid(),HASH,"QA100","BLUE",new long[]{0,2,0,0}),"status"));
+   equal(2L,Inventory.grandTotal(repo.snapshot().stateCopy.draft.rows));
+  });
+  test("capture requires stable time and reserves until saved or reset",()->{
+   com.gongyo.photo.CaptureGate gate=new com.gongyo.photo.CaptureGate();
+   equal(false,gate.observe("",0));equal(false,gate.observe("QA100",100));equal(false,gate.observe("QA100",399));equal(true,gate.observe("QA100",400));
+   equal(false,gate.observe("QA200",1000));equal(false,gate.observe("QA200",1400));
+   gate.reset();equal(false,gate.observe("QA100",1500));equal(true,gate.observe("QA100",1800));
+   gate.saved("QA100");equal(false,gate.observe("",2000));equal(false,gate.observe("QA100",2599));
+   equal(false,gate.observe("",2700));equal(false,gate.observe("QA100",3300));equal(true,gate.observe("QA100",3600));
+  });
+  test("capture restored suppression alternating reads and backward clock are safe",()->{
+   com.gongyo.photo.CaptureGate gate=new com.gongyo.photo.CaptureGate();gate.saved("QA100");
+   equal(false,gate.observe("QA100",100));equal(false,gate.observe("QA100",600));
+   equal(false,gate.observe("QA200",1000));equal(false,gate.observe("QA300",1400));equal(false,gate.observe("QA200",1800));
+   equal(false,gate.observe("QA200",1700));equal(false,gate.observe("QA200",1999));equal(true,gate.observe("QA200",2000));
   });
   System.out.println("RESULT "+passed+" passed; "+failed+" failed");
   if(failed>0)System.exit(1);
