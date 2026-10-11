@@ -50,10 +50,18 @@ public final class WorkArchive {
 
     /** Completion state is committed together with the matching archive entry. */
     public static void setCompleted(StateCodec.State state, boolean completed) {
-        state.draft.completed = completed;
-        for (Inventory.Job saved : state.jobs) {
-            if (saved.id.equals(state.draft.id)) saved.completed = completed;
+        if (state == null || state.draft == null) {
+            throw new IllegalArgumentException("완료할 작업이 없습니다.");
         }
+        if (completed && !state.draft.completed) {
+            // Freeze exactly what the active screen/export currently displays before locking.
+            // displayBinding preserves hidden and ambiguous references without changing stock.
+            for (Inventory.Row row : state.draft.rows) {
+                row.binding = PhotoBindings.displayBinding(state, row);
+            }
+        }
+        state.draft.completed = completed;
+        refreshTrackedDraft(state);
     }
 
     private static void requireSpace(StateCodec.State state) {
