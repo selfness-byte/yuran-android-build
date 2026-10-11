@@ -48,6 +48,22 @@ public final class WorkArchive {
         return false;
     }
 
+    /** Completion state is committed together with the matching archive entry. */
+    public static void setCompleted(StateCodec.State state, boolean completed) {
+        if (state == null || state.draft == null) {
+            throw new IllegalArgumentException("완료할 작업이 없습니다.");
+        }
+        if (completed && !state.draft.completed) {
+            // Freeze exactly what the active screen/export currently displays before locking.
+            // displayBinding preserves hidden and ambiguous references without changing stock.
+            for (Inventory.Row row : state.draft.rows) {
+                row.binding = PhotoBindings.displayBinding(state, row);
+            }
+        }
+        state.draft.completed = completed;
+        refreshTrackedDraft(state);
+    }
+
     private static void requireSpace(StateCodec.State state) {
         if (state.jobs.size() >= MAX_WORKS) {
             throw new IllegalArgumentException("보관함에 작업이 100개 있습니다. 필요 없는 작업을 삭제한 뒤 새 작업을 만들어 주세요.");

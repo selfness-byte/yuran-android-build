@@ -35,7 +35,7 @@ public final class LabelScanActivity extends Activity {
     }
     private Holder holder;
     private TextView status;
-    private Button cameraButton,fileButton,retryButton;
+    private Button cameraButton;
     private boolean resumed;
 
     @Override public void onCreate(Bundle state) {
@@ -56,15 +56,12 @@ public final class LabelScanActivity extends Activity {
             if(holder.phase==PREPARING)holder.phase=holder.uri==null?IDLE:READY_EXTERNAL;
         }
         ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);
-        LinearLayout content=new LinearLayout(this);content.setOrientation(LinearLayout.VERTICAL);content.setPadding(28,28,28,28);
+        LinearLayout content=new LinearLayout(this);content.setOrientation(LinearLayout.VERTICAL);int pad=PhotoUi.dp(content,20);content.setPadding(pad,pad,pad,pad);
         scroll.addView(content,new ScrollView.LayoutParams(-1,-2));setContentView(scroll);
-        TextView title=new TextView(this);title.setText("사진 구별");title.setTextSize(26);title.setTextColor(0xffd63d79);content.addView(title);
-        TextView hint=new TextView(this);hint.setText("상품 라벨을 읽어 저장된 품번·색상을 찾습니다.\n라벨 사진은 옷 사진으로 등록되지 않습니다.");hint.setTextSize(17);hint.setPadding(0,20,0,20);content.addView(hint);
-        status=new TextView(this);status.setTextSize(17);status.setPadding(0,12,0,24);content.addView(status);
+        TextView title=new TextView(this);title.setText("사진 구별");title.setTextSize(26);PhotoUi.title(title);content.addView(title);
+        TextView hint=new TextView(this);hint.setText("상품 라벨을 읽어 저장된 품번·색상을 찾습니다.\n라벨 사진은 옷 사진으로 등록되지 않습니다.");hint.setTextSize(17);hint.setPadding(0,PhotoUi.dp(content,16),0,PhotoUi.dp(content,20));content.addView(hint);
+        status=new TextView(this);status.setTextSize(17);status.setPadding(pad,pad,pad,pad);PhotoUi.card(status);content.addView(status,new LinearLayout.LayoutParams(-1,-2));
         cameraButton=button(content,"라벨 촬영",v->requestCamera());
-        fileButton=button(content,"라벨 사진 파일 선택",v->begin(false));
-        retryButton=button(content,"같은 라벨 다시 읽기",v->{if(holder.phase==FAILED&&holder.uri!=null){holder.phase=READY_READ;drain();}});
-        button(content,"돌아가기",v->{setResult(RESULT_CANCELED);finish();});
         try {holder.client=PhotoClient.get(getApplicationContext());}
         catch(IOException e){holder.message=e.getMessage();holder.phase=FAILED;}
         PhotoUi.insets(scroll,0);PhotoUi.buttons(content);display();
@@ -81,8 +78,8 @@ public final class LabelScanActivity extends Activity {
     private boolean available(){return resumed&&!isFinishing()&&!holder.closed&&holder.client!=null&&(holder.phase==IDLE||holder.phase==FAILED);}
     private void display(){
         status.setText(holder.message==null?"라벨 읽기를 준비하고 있습니다.":holder.message);
-        boolean ready=available();cameraButton.setEnabled(ready);fileButton.setEnabled(ready);
-        retryButton.setVisibility(holder.phase==FAILED&&holder.uri!=null?View.VISIBLE:View.GONE);retryButton.setEnabled(ready);
+        boolean ready=available();cameraButton.setEnabled(ready);
+        cameraButton.setText(holder.phase==FAILED?"라벨 다시 촬영":"라벨 촬영");
     }
     private void requestCamera(){
         if(!available())return;
@@ -91,7 +88,7 @@ public final class LabelScanActivity extends Activity {
     }
     @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] grants){
         super.onRequestPermissionsResult(request,permissions,grants);
-        if(request==CAMERA_PERMISSION){holder.permissionPending=false;if(grants.length>0&&grants[0]==PackageManager.PERMISSION_GRANTED){holder.cameraAfterPermission=true;drain();}else{holder.message="라벨 촬영에는 카메라 허용이 필요합니다. 사진 파일을 선택할 수도 있습니다.";display();}}
+        if(request==CAMERA_PERMISSION){holder.permissionPending=false;if(grants.length>0&&grants[0]==PackageManager.PERMISSION_GRANTED){holder.cameraAfterPermission=true;drain();}else{holder.message="라벨 촬영에는 카메라 허용이 필요합니다. ‘라벨 촬영’을 눌러 다시 허용해 주세요.";display();}}
     }
     private void begin(boolean camera){
         if(!available())return;holder.phase=PREPARING;holder.message="라벨 사진을 준비하고 있습니다.";display();final Holder h=holder;
@@ -120,13 +117,13 @@ public final class LabelScanActivity extends Activity {
                 Intent camera=new Intent(MediaStore.ACTION_IMAGE_CAPTURE);camera.putExtra(MediaStore.EXTRA_OUTPUT,h.uri);
                 camera.setClipData(ClipData.newRawUri("label camera output",h.uri));camera.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                 List<ResolveInfo> targets=getPackageManager().queryIntentActivities(camera,PackageManager.MATCH_DEFAULT_ONLY);
-                if(targets.isEmpty())throw new ActivityNotFoundException("카메라 앱을 열 수 없습니다. 라벨 사진 파일을 선택해 주세요.");
+                if(targets.isEmpty())throw new ActivityNotFoundException("카메라 앱을 열 수 없습니다. 카메라 앱과 권한을 확인한 뒤 다시 촬영해 주세요.");
                 for(ResolveInfo target:targets)grantUriPermission(target.activityInfo.packageName,h.uri,Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                 startActivityForResult(camera,h.externalCode);
             }else{
                 Intent file=new Intent(Intent.ACTION_OPEN_DOCUMENT);file.addCategory(Intent.CATEGORY_OPENABLE);file.setType("image/*");file.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);startActivityForResult(file,h.externalCode);
             }
-            h.message="라벨 사진을 촬영하거나 선택한 뒤 돌아오면 글자와 바코드를 읽습니다.";
+            h.message="라벨을 촬영한 뒤 돌아오면 글자와 바코드를 읽습니다.";
         }catch(IOException|ActivityNotFoundException|SecurityException e){h.phase=FAILED;h.message=message(e);}
     }
     @Override protected void onActivityResult(int request,int result,Intent data){

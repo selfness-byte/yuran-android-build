@@ -103,6 +103,27 @@ public final class PhotoRegistration {
   PhotoCatalog.require(r.productId!=null&&r.variantId!=null,"selected identity");if(!r.productId.isEmpty())PhotoCatalog.uuid(r.productId);if(!r.variantId.isEmpty())PhotoCatalog.uuid(r.variantId);
   PhotoCatalog.text(r.sku,PhotoLimits.MAX_SKU_CHARS);PhotoCatalog.text(r.sourceColor,PhotoLimits.MAX_SOURCE_COLOR_CHARS);PhotoCatalog.hash(r.sourceSha256);
  }
+ /** Read the exact registration target without changing catalogue, work IDs or photos. */
+ public static final class Preview {
+  public final String status,reason,productId,variantId,photoVersionId,sku,sourceColor;
+  private Preview(String status,String reason,Target target,String sku,String color){
+   this.status=status;this.reason=reason;this.sku=sku;sourceColor=color;
+   productId=target==null||target.newProduct?"":target.product.id;
+   variantId=target==null||target.newVariant?"":target.variant.id;
+   photoVersionId=target==null?"":target.variant.currentPhotoVersionId;
+  }
+ }
+ public static Preview preview(InventoryRepository.Snapshot current,String generation,long revision,String workId,String sku,String color)throws IOException{
+  PhotoCatalog.uuid(generation);PhotoCatalog.uuid(workId);PhotoCatalog.require(revision>=0,"revision");
+  PhotoCatalog.text(sku,PhotoLimits.MAX_SKU_CHARS);PhotoCatalog.text(color,PhotoLimits.MAX_SOURCE_COLOR_CHARS);
+  sku=PhotoContract.key(sku);color=PhotoContract.key(color);
+  if(!current.generation.equals(generation))return new Preview(PhotoContract.CONFLICT,"GENERATION_CHANGED",null,sku,color);
+  if(current.revision!=revision)return new Preview(PhotoContract.CONFLICT,"REVISION_CHANGED",null,sku,color);
+  if(current.stateCopy.draft.completed)return new Preview(PhotoContract.CONFLICT,"WORK_COMPLETED",null,sku,color);
+  if(!current.stateCopy.draft.stockSessionId.equals(workId))return new Preview(PhotoContract.CONFLICT,"WORK_CHANGED",null,sku,color);
+  try{return new Preview(PhotoContract.OK,"",target(current.stateCopy,"","",sku,color),sku,color);}
+  catch(IOException mismatch){return new Preview(PhotoContract.INVALID_REQUEST,"IDENTITY_MISMATCH",null,sku,color);}
+ }
  static final class Target {
   final PhotoCatalog.Product product;final PhotoCatalog.Variant variant;final boolean newProduct,newVariant;
   Target(PhotoCatalog.Product p,PhotoCatalog.Variant v,boolean np,boolean nv){product=p;variant=v;newProduct=np;newVariant=nv;}

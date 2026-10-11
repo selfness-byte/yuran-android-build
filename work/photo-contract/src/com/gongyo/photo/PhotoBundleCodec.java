@@ -20,6 +20,7 @@ public final class PhotoBundleCodec {
    case "lookupBarcode":fields="protocolVersion,barcode";break;
    case "beginIntake":fields="protocolVersion";break;
    case "registerIntake":fields="protocolVersion,generation,targetWorkId,requestId,sourceSha256,sku,sourceColor,quantities";break;
+   case "getPhotoTarget":fields="protocolVersion,generation,revision,targetWorkId,sku,sourceColor";break;
    case "getStock":fields="protocolVersion,sku";break;
    default:throw new IllegalArgumentException("Unknown photo method");
   }

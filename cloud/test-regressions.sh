@@ -13,7 +13,25 @@ while IFS= read -r -d '' qa_source; do qa_sources+=("$qa_source"); done < <(find
  work/android/src/com/gongyo/orderly/PhotoLimits.java \
  work/photo-android/src/com/gongyo/yuranphoto/LabelMatcher.java \
  "${qa_sources[@]}"
-"$qa_jdk/bin/java" -Djava.awt.headless=true -cp "$qa_classes" com.gongyo.orderly.ExportPhotoChecks
-"$qa_jdk/bin/java" -cp "$qa_classes" com.gongyo.tests.RegressionSuite
-"$qa_jdk/bin/java" -cp "$qa_classes" com.gongyo.tests.CaptureSessionChecks
-"$qa_jdk/bin/java" -cp "$qa_classes" com.gongyo.tests.CaptureRecoveryChecks
+qa_suite="${1:-all}"
+if [[ "$qa_suite" == all || "$qa_suite" == existing ]]; then
+ "$qa_jdk/bin/java" -Djava.awt.headless=true -cp "$qa_classes" com.gongyo.orderly.ExportPhotoChecks
+ "$qa_jdk/bin/java" -cp "$qa_classes" com.gongyo.tests.RegressionSuite
+ "$qa_jdk/bin/java" -cp "$qa_classes" com.gongyo.tests.CaptureSessionChecks
+ "$qa_jdk/bin/java" -cp "$qa_classes" com.gongyo.tests.CaptureRecoveryChecks
+fi
+if [[ "$qa_suite" == all || "$qa_suite" == note ]]; then
+ "$qa_jdk/bin/java" -cp "$qa_classes" com.gongyo.orderly.NoteCompletionChecks
+ "$qa_jdk/bin/java" -cp "$qa_classes" com.gongyo.orderly.PhotoTargetChecks
+fi
+if [[ "$qa_suite" == all || "$qa_suite" == sync ]]; then
+ "$qa_jdk/bin/java" -cp "$qa_classes" com.gongyo.tests.SyncRegressionChecks
+fi
+if [[ "$qa_suite" == all || "$qa_suite" == ocr ]]; then
+ if [[ -f "$qa_classes/com/gongyo/tests/OcrRegressionChecks.class" ]]; then
+  "$qa_jdk/bin/java" -cp "$qa_classes" com.gongyo.tests.OcrRegressionChecks
+ else
+  echo "OCR regression is not yet present" >&2
+  exit 2
+ fi
+fi

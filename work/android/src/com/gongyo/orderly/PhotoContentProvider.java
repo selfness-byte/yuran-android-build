@@ -27,7 +27,7 @@ public final class PhotoContentProvider extends ContentProvider {
  @Override public Bundle call(String method,String arg,Bundle extras){
   // Authorization precedes all Bundle deserialization, including rejected methods/payloads.
   authorize("registerPhoto".equals(method)||"registerBarcode".equals(method)||"registerIntake".equals(method)||"beginIntake".equals(method)?RuntimeIds.WRITE_PHOTOS:RuntimeIds.READ_PHOTOS);
-  if(!Arrays.asList("getCompatibility","getCatalogPage","getReceipt","registerPhoto","registerBarcode","lookupBarcode","registerIntake","beginIntake","getStock").contains(method))throw new UnsupportedOperationException("Unknown photo method");
+  if(!Arrays.asList("getCompatibility","getCatalogPage","getReceipt","registerPhoto","registerBarcode","lookupBarcode","registerIntake","beginIntake","getStock","getPhotoTarget").contains(method))throw new UnsupportedOperationException("Unknown photo method");
   PhotoContract.RegisterRequest parsed=null;Uri source=null;
   try{
    if(arg!=null)throw new IllegalArgumentException("Photo call arg forbidden");
@@ -41,6 +41,10 @@ public final class PhotoContentProvider extends ContentProvider {
     if(extras.containsKey("scope")&&!Arrays.asList("all","note").contains(PhotoBundleCodec.string(extras,"scope")))throw new IllegalArgumentException("Photo page scope");
     if(extras.containsKey("details")&&!"label".equals(PhotoBundleCodec.string(extras,"details")))throw new IllegalArgumentException("Photo page details");
     if(offset>0||extras.containsKey("generation")||extras.containsKey("revision")){PhotoCatalog.uuid(PhotoBundleCodec.string(extras,"generation"));if(PhotoBundleCodec.number(extras,"revision")<0)throw new IllegalArgumentException("Photo page revision");}
+   }else if(method.equals("getPhotoTarget")){
+    PhotoCatalog.uuid(PhotoBundleCodec.string(extras,"generation"));PhotoCatalog.uuid(PhotoBundleCodec.string(extras,"targetWorkId"));
+    if(PhotoBundleCodec.number(extras,"revision")<0)throw new IllegalArgumentException("Photo target revision");
+    PhotoCatalog.text(PhotoBundleCodec.string(extras,"sku"),PhotoLimits.MAX_SKU_CHARS);PhotoCatalog.text(PhotoBundleCodec.string(extras,"sourceColor"),PhotoLimits.MAX_SOURCE_COLOR_CHARS);
    }else if(method.equals("registerIntake")){
     PhotoCatalog.uuid(PhotoBundleCodec.string(extras,"requestId"));IntakeContract.fingerprint(PhotoBundleCodec.string(extras,"generation"),PhotoBundleCodec.string(extras,"targetWorkId"),PhotoBundleCodec.string(extras,"sourceSha256"),PhotoBundleCodec.string(extras,"sku"),PhotoBundleCodec.string(extras,"sourceColor"),IntakeContract.counts(PhotoBundleCodec.string(extras,"quantities")));
    }else if(method.equals("getStock")){PhotoCatalog.text(PhotoBundleCodec.string(extras,"sku"),80);
@@ -62,7 +66,17 @@ public final class PhotoContentProvider extends ContentProvider {
    InventoryRepository repo=RepositoryOwner.get(owner());
    if(method.equals("getCompatibility")){
     InventoryRepository.Snapshot s=repo.snapshot();int code=owner().getPackageManager().getPackageInfo(RuntimeIds.OWNER_PACKAGE,0).versionCode;
-    return PhotoBundleCodec.compatibility(new PhotoContract.Compatibility(1,s.generation,s.revision,code));
+    Bundle result=PhotoBundleCodec.compatibility(new PhotoContract.Compatibility(1,s.generation,s.revision,code));
+    result.putString("targetWorkId",s.stateCopy.draft.completed?"":s.stateCopy.draft.stockSessionId);
+    PhotoBundleCodec.response(result);return result;
+   }
+   if(method.equals("getPhotoTarget")){
+    InventoryRepository.Snapshot current=repo.snapshot();
+    PhotoRegistration.Preview preview=PhotoRegistration.preview(current,PhotoBundleCodec.string(extras,"generation"),PhotoBundleCodec.number(extras,"revision"),PhotoBundleCodec.string(extras,"targetWorkId"),PhotoBundleCodec.string(extras,"sku"),PhotoBundleCodec.string(extras,"sourceColor"));
+    Bundle result=PhotoBundleCodec.base(preview.status,current.generation,current.revision,preview.reason);
+    result.putString("targetWorkId",current.stateCopy.draft.completed?"":current.stateCopy.draft.stockSessionId);
+    result.putString("productId",preview.productId);result.putString("variantId",preview.variantId);result.putString("photoVersionId",preview.photoVersionId);
+    result.putString("sku",preview.sku);result.putString("sourceColor",preview.sourceColor);PhotoBundleCodec.response(result);return result;
    }
    if(method.equals("beginIntake")){
     InventoryRepository.Snapshot current=IntakeRegistration.begin(repo);

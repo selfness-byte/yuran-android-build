@@ -41,11 +41,11 @@ public final class LiveLabelActivity extends Activity {
   getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
   LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);int pad=Math.round(12*getResources().getDisplayMetrics().density);PhotoUi.insets(root,pad);
   TextView title=new TextView(this);title.setText(mode.equals("intake")?"새입고 연속 촬영":"재고 조회 연속 촬영");title.setTextSize(23);root.addView(title);
-  status=new TextView(this);status.setTextSize(16);status.setText("품번이 선명하게 보이도록 택을 비춰 주세요.");root.addView(status);
-  preview=new TextureView(this);root.addView(preview,new LinearLayout.LayoutParams(-1,0,1));
+  status=new TextView(this);status.setTextSize(16);status.setText("품번이 선명하게 보이도록 택을 비춰 주세요.");ScrollView resultScroll=new ScrollView(this);resultScroll.setFillViewport(true);resultScroll.addView(status);root.addView(resultScroll,new LinearLayout.LayoutParams(-1,Math.round(104*getResources().getDisplayMetrics().density)));
+  preview=new TextureView(this);preview.setMinimumHeight(Math.round(160*getResources().getDisplayMetrics().density));root.addView(preview,new LinearLayout.LayoutParams(-1,0,1));
   manual=PhotoUi.button(root,"지금 사진 저장",v->{if(ready&&captureState!=null&&!captureState.busy())manualRequested=true;});
   next=PhotoUi.button(root,"같은 품번 다음 장 준비",v->{if(ready&&captureState!=null&&!captureState.busy())storage.execute(()->{try{recovery.reset(captureState);message("다음 택을 비춰 주세요.");}catch(Exception e){message(e.getMessage());}});});
-  PhotoUi.button(root,"촬영 끝내기",v->endCapture());setContentView(root);
+  PhotoUi.button(root,"촬영 끝내기",v->endCapture());ScrollView screen=new ScrollView(this);screen.setFillViewport(true);screen.addView(root);setContentView(screen);
   recognizer=TextRecognition.getClient(new ChineseTextRecognizerOptions.Builder().build());
   cameraThread=new HandlerThread("yuran-label-camera");cameraThread.start();cameraHandler=new Handler(cameraThread.getLooper());
   preview.setSurfaceTextureListener(new TextureView.SurfaceTextureListener(){
@@ -63,7 +63,7 @@ public final class LiveLabelActivity extends Activity {
      else restored=recovery.begin(client.compatibility().generation,"");
     }
     captureState=restored;generation=restored.generation;targetWorkId=restored.targetWorkId;
-    ready=true;message(restored.interrupted()?"이전 촬영이 중단됐습니다. 저장 목록을 확인한 뒤 같은 품번 다음 장 준비를 눌러 주세요.":restored.busy()?"사진 저장과 입고 결과를 확인하고 있습니다.":"품번을 읽으면 사진을 저장하고 완료음이 납니다.");
+    ready=true;message(restored.interrupted()?"이전 촬영이 중단됐습니다. 저장 목록을 확인한 뒤 같은 품번 다음 장 준비를 눌러 주세요.":restored.busy()?"사진 저장과 입고 결과를 확인하고 있습니다.":"품번을 읽으면 사진을 기기에 보관하고 촬영 확인음이 납니다.");
     if(!closing)catalog.execute(this::loadCatalog);
    }catch(Exception e){message(e.getMessage());}
   });
@@ -166,10 +166,13 @@ public final class LiveLabelActivity extends Activity {
    if(rotation==0)upright=frame;else{Matrix matrix=new Matrix();matrix.postRotate(rotation);upright=Bitmap.createBitmap(frame,0,0,frame.getWidth(),frame.getHeight(),matrix,true);}
    CaptureInbox.Entry entry=inbox.save(upright,null,text,owned.mode,owned.generation,owned.targetWorkId,sku);
    recovery.saved(owned,token,sku);lastSavedId=entry.id;
-   main.post(()->{if(active&&!closing){status.setText((entry.sku.isEmpty()?"사진":entry.sku)+" 저장 완료 · 다음 택을 비춰 주세요.");beep();}});
+   main.post(()->{if(active&&!closing){status.setText((entry.sku.isEmpty()?"사진":entry.sku)+(owned.mode.equals("intake")?" 기기에 보관 · 유란노트 전송 확인 중":" 기기에 보관 · 재고 확인 중"));beep();}});
    if(mode.equals("intake")&&entry.ready){CaptureInbox.Entry result=inbox.submit(entry.id,client);if(lastSavedId.equals(result.id))message(result.sku+" · "+result.message);}
-   else if(mode.equals("lookup")&&!entry.sku.isEmpty()){String stock=client.stockSummary(entry.sku);if(lastSavedId.equals(entry.id))message(entry.sku+"\n"+stock+"\n다음 택을 비춰 주세요.");}
-   else message("사진 저장됨 · 사이즈별 수량은 저장 목록에서 확인해 주세요.");
+   else if(mode.equals("lookup")&&!entry.sku.isEmpty()){
+    CaptureLookup.Result result=CaptureLookup.publish(entry.id,client.stockSummary(entry.sku),(id,summary)->inbox.lookupResult(id,summary));
+    main.post(()->{if(!closing)result.present(lastSavedId,stock->status.setText(entry.sku+"\n"+stock+"\n다음 택을 비춰 주세요."));});
+   }
+   else message("사진 저장됨 · 사이즈별 수량은 새입고의 남은 사진 이어서 처리에서 확인해 주세요.");
   }catch(Exception e){message("사진 또는 입고 확인 필요: "+(e.getMessage()==null?"다시 시도해 주세요.":e.getMessage()));}
   finally{owned.release(token);if(upright!=null&&upright!=frame)upright.recycle();if(frame!=null)frame.recycle();}
  }
