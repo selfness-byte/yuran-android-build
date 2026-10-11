@@ -113,6 +113,22 @@ public final class RegressionSuite {
   test("inline size marker is excluded from color",()->{Object r=intake("STYLE: QA100\nCOLOR: BLUE SIZE: 95(M)\nM2");equal("BLUE",field(r,"color"));equal(true,field(r,"ready"));});
   test("explicit suffix wins over shorter catalog product",()->{Bundle b=match("STYLE: QA100-R2\nCOLOR: BLUE\nSIZE: M",new String[][]{{"QA100","BLUE"}});equal("QA100-R2",b.getString("sku"));equal(0,b.<Bundle>getParcelableArrayList("matches").size());});
 
+
+  test("restoring stock preserves same-photo intake protection",()->{
+   InventoryRepository repo=repository();register(repo,uuid(),HASH,"QA100","BLUE",new long[]{0,2,0,0});
+   InventoryRepository.Snapshot before=repo.snapshot();repo.restore(before.generation,before.revision,before.stateCopy);
+   equal("OK",field(register(repo,uuid(),HASH,"QA100","BLUE",new long[]{0,2,0,0}),"status"));
+   equal(2L,Inventory.grandTotal(repo.snapshot().stateCopy.draft.rows));
+  });
+  test("continuous camera saves stable SKU once until next label",()->{
+   Class<?> cls;try{cls=Class.forName("com.gongyo.photo.CaptureGate");}catch(ClassNotFoundException missing){throw new AssertionError("Continuous capture gate is not implemented");}
+   Object gate=cls.newInstance();Method observe=cls.getMethod("observe",String.class,long.class),saved=cls.getMethod("saved",String.class);
+   equal(false,observe.invoke(gate,"QA100",100L));equal(true,observe.invoke(gate,"QA100",500L));saved.invoke(gate,"QA100");
+   equal(false,observe.invoke(gate,"QA100",900L));equal(false,observe.invoke(gate,"QA100",2000L));
+   equal(false,observe.invoke(gate,"",2200L));equal(false,observe.invoke(gate,"",3000L));
+   equal(false,observe.invoke(gate,"QA100",3200L));equal(true,observe.invoke(gate,"QA100",3700L));
+   saved.invoke(gate,"QA100");equal(false,observe.invoke(gate,"QA200",4200L));equal(true,observe.invoke(gate,"QA200",4700L));
+  });
   System.out.println("RESULT "+passed+" passed; "+failed+" failed");
   if(failed>0)System.exit(1);
  }
