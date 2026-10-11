@@ -18,11 +18,14 @@ public final class PhotoBundleCodec {
    case "registerPhoto":fields="protocolVersion,requestId,generation,revision,productId,variantId,sku,sourceColor,sourceSha256,sourceUri";break;
    case "registerBarcode":fields="protocolVersion,generation,revision,productId,variantId,sku,sourceColor,barcode";break;
    case "lookupBarcode":fields="protocolVersion,barcode";break;
+   case "beginIntake":fields="protocolVersion";break;
+   case "registerIntake":fields="protocolVersion,generation,targetWorkId,requestId,sourceSha256,sku,sourceColor,quantities";break;
+   case "getStock":fields="protocolVersion,sku";break;
    default:throw new IllegalArgumentException("Unknown photo method");
   }
   validate(b,fields,false);
  }
- public static void response(Bundle b){validate(b,"protocolVersion,generation,revision,status,reason,noteVersionCode,requestId,productId,variantId,photoVersionId,sku,sourceColor,barcode,barcodes,items,nextOffset",true);}
+ public static void response(Bundle b){validate(b,"protocolVersion,generation,targetWorkId,revision,status,reason,noteVersionCode,requestId,productId,variantId,photoVersionId,sku,sourceColor,barcode,barcodes,items,nextOffset,stockSummary",true);}
  private static void validate(Bundle b,String fields,boolean response){
   if(b==null)throw new IllegalArgumentException("Missing photo bundle");
   Parcel p=Parcel.obtain();try{p.writeBundle(b);if(p.dataSize()>MAX_BUNDLE_BYTES)throw new IllegalArgumentException("Photo bundle exceeds 64KiB");}finally{p.recycle();}

@@ -31,6 +31,7 @@ public final class MainActivity extends Activity {
     private byte[] screenBaseline;
     private DialogDraft dialogDraft;
     private AlertDialog activeEditor;
+    private FrozenExportPreview.Handle exportPreview;
     private final List<AlertDialog> editorDialogs=new ArrayList<>();
     private boolean conflicted,transitioning;
     private Runnable captureDialogInput;
@@ -148,7 +149,7 @@ public final class MainActivity extends Activity {
     private AutoCompleteTextView quickSku,quickColor;
     private EditText quickQuantity;
     private Spinner quickSize;
-    private TextView quickPreview;
+    private TextView quickPreview,quickSkuTotal;
     private String quickSkuValue="",quickColorValue="",quickQtyValue="1",quickFeedback="";
     private int quickSizeValue=0;
     private String[] quickBaseline;
@@ -222,7 +223,7 @@ public final class MainActivity extends Activity {
     }
     @Override protected void onPause(){super.onPause();if(ready){capture();if(!backupBlocked()){flushSourceHistory();persist();}}}
     @Override protected void onStop(){if(observingPhotos){getContentResolver().unregisterContentObserver(photoObserver);observingPhotos=false;}detachBackupSession();super.onStop();}
-    @Override protected void onDestroy(){detachBackupSession();handler.removeCallbacksAndMessages(null);super.onDestroy();}
+    @Override protected void onDestroy(){if(exportPreview!=null){exportPreview.close();exportPreview=null;}detachBackupSession();handler.removeCallbacksAndMessages(null);super.onDestroy();}
     @Override public void onBackPressed(){if(backupBlocked()){backupSession.cancel(this,backupSession.operation,false);return;}if(tab!=0){navigate(0);}else super.onBackPressed();}
     private void fatal(String message){TextView v=text(message,18,INK);v.setPadding(dp(24),dp(40),dp(24),dp(24));setContentView(v);}
     private int dp(float n){return Math.round(n*getResources().getDisplayMetrics().density);}
@@ -347,7 +348,7 @@ public final class MainActivity extends Activity {
     private void hideKeyboard(){View f=getCurrentFocus();if(f!=null)((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(f.getWindowToken(),0);}
     private void render(){
         if(backupBlocked()||!ready){showBackupProgress();return;}
-        captureQuick();quickSku=null;quickColor=null;quickQuantity=null;quickSize=null;quickPreview=null;
+        captureQuick();quickSku=null;quickColor=null;quickQuantity=null;quickSize=null;quickPreview=null;quickSkuTotal=null;
         titleInput=null;sourceInput=null;
         root=vertical();root.setBackgroundColor(BG);
         LinearLayout header=vertical();header.setPadding(dp(22),dp(19),dp(22),dp(18));header.setBackgroundColor(INK);
@@ -668,7 +669,7 @@ public final class MainActivity extends Activity {
     private void showQuickAdjustment(){
         if(state.draft.completed){LinearLayout locked=card();locked.addView(heading("수량 바로 조정 · 잠김",17));locked.addView(text("완료 취소 후 수량을 변경할 수 있습니다.",13,MUTED));return;}
         if(quickSkuValue.isEmpty()&&!state.draft.rows.isEmpty()){quickSkuValue=state.draft.rows.get(0).sku;quickColorValue=state.draft.rows.get(0).color;}
-        LinearLayout c=card();c.addView(heading("수량 바로 조정",20));space(c,5);c.addView(text("품번과 색상을 선택한 뒤 수량을 더하거나 빼세요.",13,MUTED));space(c,12);
+        LinearLayout c=card();LinearLayout quickHeader=new LinearLayout(this);quickHeader.setGravity(Gravity.CENTER_VERTICAL);quickHeader.addView(heading("수량 바로 조정",20),new LinearLayout.LayoutParams(0,-2,1));quickSkuTotal=text("",15,TEAL);quickSkuTotal.setGravity(Gravity.END);quickSkuTotal.setPadding(dp(8),0,0,0);quickHeader.addView(quickSkuTotal,new LinearLayout.LayoutParams(-2,-2));c.addView(quickHeader);space(c,5);c.addView(text("품번과 색상을 선택한 뒤 수량을 더하거나 빼세요.",13,MUTED));space(c,12);
         LinearLayout selectors=new LinearLayout(this);LinearLayout skuBox=vertical(),colorBox=vertical();
         selectors.addView(skuBox,new LinearLayout.LayoutParams(0,-2,1.5f));LinearLayout.LayoutParams colorLP=new LinearLayout.LayoutParams(0,-2,1);colorLP.leftMargin=dp(8);selectors.addView(colorBox,colorLP);c.addView(selectors);
         quickSku=menuInput(skuBox,"품번",quickSkuValue);quickColor=menuInput(colorBox,"색상 코드",quickColorValue);
@@ -727,6 +728,7 @@ public final class MainActivity extends Activity {
     private void updateQuickPreview(){
         if(quickPreview==null||quickQuantity==null||quickSku==null||quickColor==null||quickSize==null)return;
         captureQuick();long total=Inventory.grandTotal(state.draft.rows);
+        if(quickSkuTotal!=null)quickSkuTotal.setText("선택 품번 전체 "+Inventory.totalForSku(state.draft.rows,quickSkuValue)+"개");
         if(quickSkuValue.trim().isEmpty()||quickColorValue.trim().isEmpty()){quickPreview.setText("현재 전체 "+total+"개 · 품번과 색상을 선택하세요.");return;}
         try{long amount=quickAmount();Inventory.Job plus=copy(state.draft);QuantityAdjuster.Result next=QuantityAdjuster.adjust(plus,quickSkuValue,quickColorValue,quickSizeValue,amount,false,state.globalRules,state.skuRules);
             String minus;try{Inventory.Job less=copy(state.draft);QuantityAdjuster.adjust(less,quickSkuValue,quickColorValue,quickSizeValue,amount,true,state.globalRules,state.skuRules);minus=String.valueOf(Inventory.grandTotal(less.rows))+"개";}catch(IllegalArgumentException e){minus="불가";}
@@ -1144,6 +1146,14 @@ public final class MainActivity extends Activity {
         else executeExport(frozen);
     }
     private void executeExport(ExportSnapshot frozen){
+        if(!"xlsx".equals(frozen.format)){executeExportContents(frozen);return;}
+        try{
+            MediaSource source=store.exportMedia(repository,exportMediaStore,frozen);source.checkReady();
+            if(exportPreview!=null)exportPreview.close();
+            exportPreview=FrozenExportPreview.show(this,frozen,source,()->executeExportContents(frozen),()->clearFrozenExport(frozen));
+        }catch(Exception failure){storageFailure(failure);alert("사진 미리보기 오류",failure.getMessage());}
+    }
+    private void executeExportContents(ExportSnapshot frozen){
         try{
             MediaSource source=store.exportMedia(repository,exportMediaStore,frozen);source.checkReady();
             String route=frozen.options.get("route");

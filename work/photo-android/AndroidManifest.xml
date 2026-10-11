@@ -23,6 +23,8 @@
    </intent-filter>
   </activity>
   <activity android:name="com.gongyo.yuranphoto.BarcodeScannerActivity" android:exported="false" android:screenOrientation="portrait" />
+  <activity android:name="com.gongyo.yuranphoto.IntakeActivity" android:exported="false" />
+  <activity android:name="com.gongyo.yuranphoto.LiveLabelActivity" android:exported="false" />
   <activity android:name="com.gongyo.yuranphoto.LabelScanActivity" android:exported="false" />
   <provider android:name="com.gongyo.yuranphoto.CaptureContentProvider" android:authorities="com.gongyo.yuranphoto.capture" android:exported="false" android:grantUriPermissions="true" />
   <provider android:name="androidx.startup.InitializationProvider" android:authorities="com.gongyo.yuranphoto.androidx-startup" android:exported="false">

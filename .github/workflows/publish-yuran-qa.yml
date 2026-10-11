@@ -1,0 +1,59 @@
+name: Publish verified Yuran QA
+on:
+  push:
+    branches: [main, codex/yuran-repairs-20261011]
+    paths:
+      - '.github/workflows/publish-yuran-qa.yml'
+      - 'cloud/publish-qa.py'
+      - 'cloud/tests/test_publish_qa.py'
+permissions:
+  contents: read
+concurrency:
+  group: publish-yuran-qa-20261011
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Read exact deployment revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin https://github.com/selfness-byte/yuran-android-build.git
+          git fetch --no-tags --depth=1 origin "$GITHUB_SHA"
+          git checkout --detach FETCH_HEAD
+          git fetch --no-tags --depth=1 origin 6d328f13840d4d1d1315b495d9da900094507228
+          git diff --exit-code 6d328f13840d4d1d1315b495d9da900094507228 HEAD -- work/ cloud/build-qa.sh cloud/package-qa.py cloud/hydrate-photo-deps.py
+      - name: Check rejection and resume boundaries
+        run: python3 -m unittest discover -s cloud/tests -p 'test_publish_qa.py' -v
+      - name: Verify the previously built APK pair
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 cloud/publish-qa.py --verify-only
+  publish:
+    if: github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - name: Read exact deployment revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin https://github.com/selfness-byte/yuran-android-build.git
+          git fetch --no-tags --depth=1 origin "$GITHUB_SHA"
+          git checkout --detach FETCH_HEAD
+      - name: Publish QA downloads and verify anonymous access
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 cloud/publish-qa.py --publish

@@ -67,7 +67,7 @@ public final class LabelScanActivity extends Activity {
         button(content,"돌아가기",v->{setResult(RESULT_CANCELED);finish();});
         try {holder.client=PhotoClient.get(getApplicationContext());}
         catch(IOException e){holder.message=e.getMessage();holder.phase=FAILED;}
-        display();
+        PhotoUi.insets(scroll,0);PhotoUi.buttons(content);display();
     }
     private Button button(LinearLayout parent,String label,View.OnClickListener action){Button b=new Button(this);b.setText(label);b.setOnClickListener(action);parent.addView(b,new LinearLayout.LayoutParams(-1,-2));return b;}
     @Override public Object onRetainNonConfigurationInstance(){return holder;}

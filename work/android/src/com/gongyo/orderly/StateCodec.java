@@ -10,6 +10,7 @@ public final class StateCodec {
   public String generation=UUID.randomUUID().toString();
   public long revision;
   public PhotoCatalog catalog=new PhotoCatalog();
+  public Map<String,IntakeRegistration.Receipt> intakeReceipts=new LinkedHashMap<>();
   public long nextRevision()throws IOException {if(revision<0||revision==Long.MAX_VALUE)throw new IOException("자료 revision이 허용 범위를 벗어났습니다.");return revision+1;}
   public Inventory.Job draft=new Inventory.Job();
   public List<Inventory.Job> jobs=new ArrayList<>();
@@ -25,7 +26,7 @@ public final class StateCodec {
  }
  public static byte[] encode(State state)throws IOException {
   if(state==null)throw new IOException("자료가 없습니다.");
-  validatePhotos(state);
+  validatePhotos(state);IntakeRegistration.validate(state.intakeReceipts,state.revision);
   ByteArrayOutputStream bytes=new ByteArrayOutputStream();DataOutputStream out=new DataOutputStream(new LimitedOutputStream(bytes));
   out.writeInt(MAGIC);out.writeInt(PhotoLimits.SCHEMA_VERSION);writeMap(out,state.globalRules);count(state.skuRules.size(),5000);out.writeInt(state.skuRules.size());
   for(Map.Entry<String,Map<String,String>> e:state.skuRules.entrySet()){writeString(out,e.getKey(),80);writeMap(out,e.getValue());}
@@ -39,6 +40,7 @@ public final class StateCodec {
   if(state.lastBackupAt<0)throw new IOException("백업 시각이 올바르지 않습니다.");
   out.writeBoolean(state.undoSnapshot!=null);if(state.undoSnapshot!=null)writeUndoSnapshot(out,state.undoSnapshot);out.writeLong(state.lastBackupAt);
   writeString(out,state.generation,36);out.writeLong(state.revision);writeCatalog(out,state.catalog);
+  out.writeInt(state.intakeReceipts.size());for(IntakeRegistration.Receipt receipt:state.intakeReceipts.values()){writeString(out,receipt.requestId,36);writeString(out,receipt.sourceHash,64);writeString(out,receipt.fingerprint,64);out.writeLong(receipt.revision);}
   out.flush();return bytes.toByteArray();
  }
  public static State decodeExternalLegacy(byte[] bytes)throws IOException {
@@ -56,7 +58,8 @@ public final class StateCodec {
   if(version>=5){n=readCount(in,StockHistory.MAX_ENTRIES);Set<String> stockIds=new HashSet<>();for(int i=0;i<n;i++){String id=readString(in,80),title=readString(in,80);long initial=in.readLong(),finalQuantity=in.readLong(),sourceTime=in.readLong(),stockTime=in.readLong(),closed=in.readLong();String session=version>=9?readString(in,80):"";long changes=version>=9?in.readLong():-1;StockHistory.Entry e=new StockHistory.Entry(id,title,initial,finalQuantity,sourceTime,stockTime,closed,session,changes);validStockEntry(e,stockIds);state.stockHistory.add(e);}}
   if(version>=8){if(in.readBoolean())state.undoSnapshot=readUndoSnapshot(in,version);state.lastBackupAt=in.readLong();if(state.lastBackupAt<0)throw new IOException("백업 시각이 올바르지 않습니다.");}
   if(version>=10){state.generation=readString(in,36);state.revision=in.readLong();state.catalog=readCatalog(in,version);}
-  validatePhotos(state);
+  if(version>=12){int receipts=readCount(in,IntakeRegistration.MAX_RECEIPTS);for(int i=0;i<receipts;i++){IntakeRegistration.Receipt receipt=new IntakeRegistration.Receipt(readString(in,36),readString(in,64),readString(in,64),in.readLong());if(state.intakeReceipts.put(receipt.sourceHash,receipt)!=null)throw new IOException("중복 입고 기록입니다.");}}
+  validatePhotos(state);IntakeRegistration.validate(state.intakeReceipts,state.revision);
   if(in.read()!=-1)throw new IOException("백업에 알 수 없는 내용이 있습니다.");
   if(version<5){StockHistory.recoverBaseline(state.draft,state.globalRules,state.skuRules);for(Inventory.Job job:state.jobs)StockHistory.recoverBaseline(job,state.globalRules,state.skuRules);for(Inventory.Job job:state.recentJobs)StockHistory.recoverBaseline(job,state.globalRules,state.skuRules);}
   return state;
