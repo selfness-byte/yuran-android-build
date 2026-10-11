@@ -36,16 +36,18 @@ public final class LabelRecognition {
     private LabelRecognition() {}
 
     /** Call on a worker; the bundled Chinese recognizer also reads Latin label text. */
-    public static Result read(Context context, Source source) throws IOException {
+    public static Result read(Context context, Source source) throws IOException { return read(context,source,true); }
+    public static Result readText(Context context, Source source) throws IOException { return read(context,source,false); }
+    private static Result read(Context context, Source source,boolean scanBarcodes) throws IOException {
         Bitmap bitmap = decode(source);
         TextRecognizer recognizer = null;
         Task<Text> task = null;
         try {
             recognizer = TextRecognition.getClient(new ChineseTextRecognizerOptions.Builder().build());
             task = recognizer.process(InputImage.fromBitmap(bitmap, 0));
-            ArrayList<String> barcodes = readBarcodes(bitmap);
+            ArrayList<String> barcodes = scanBarcodes?readBarcodes(bitmap):new ArrayList<>();
             Text recognized = Tasks.await(task, 40, TimeUnit.SECONDS);
-            String text = recognized.getText();
+            String text = intakeText(recognized);
             if (text.length() > MAX_TEXT) throw new IOException("라벨의 글자가 너무 많습니다. 상품 라벨만 가까이 촬영해 주세요.");
             if (text.trim().isEmpty() && barcodes.isEmpty()) throw new IOException("라벨의 글자와 바코드를 읽지 못했습니다. 초점을 맞춰 다시 촬영해 주세요.");
             return new Result(text, barcodes);
@@ -72,13 +74,13 @@ public final class LabelRecognition {
         }
     }
 
-    private static Bitmap decode(Source source) throws IOException {
+    static Bitmap decode(Source source) throws IOException {
         BitmapFactory.Options bounds = new BitmapFactory.Options();
         bounds.inJustDecodeBounds = true;
         try (InputStream input = source.open()) { BitmapFactory.decodeStream(input, null, bounds); }
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0
-                || (long) bounds.outWidth * bounds.outHeight > PhotoClient.MAX_PIXELS) {
-            throw new IOException("읽을 수 있는 4천만 화소 이하의 라벨 사진을 선택해 주세요.");
+                || (long) bounds.outWidth * bounds.outHeight > 240000000L || bounds.outWidth>30000 || bounds.outHeight>30000) {
+            throw new IOException("읽을 수 있는 2억4천만 화소 이하의 라벨 사진을 선택해 주세요.");
         }
         int orientation = ExifInterface.ORIENTATION_NORMAL;
         try (InputStream input = source.open()) {
@@ -105,6 +107,32 @@ public final class LabelRecognition {
         Bitmap rotated = Bitmap.createBitmap(image, 0, 0, image.getWidth(), image.getHeight(), matrix, true);
         if (rotated != image) image.recycle();
         return rotated;
+    }
+
+
+    /** Rejoin a size and a count only when they occupy the same visual row. */
+    static String intakeText(Text recognized) {
+        java.util.List<Text.Line> lines=new ArrayList<>();
+        for(Text.TextBlock block:recognized.getTextBlocks())lines.addAll(block.getLines());
+        java.util.Map<Integer,Integer> pairs=new java.util.HashMap<>();
+        java.util.Set<Integer> claimed=new java.util.HashSet<>();
+        for(int i=0;i<lines.size();i++){
+            String size=lines.get(i).getText().trim().toUpperCase(java.util.Locale.ROOT);
+            android.graphics.Rect a=lines.get(i).getBoundingBox();
+            if(!size.matches("S|M|L|XL")||a==null)continue;
+            int choice=-1;
+            for(int j=0;j<lines.size();j++){
+                if(i==j||!lines.get(j).getText().trim().matches("[0-9]{1,6}"))continue;
+                android.graphics.Rect b=lines.get(j).getBoundingBox();if(b==null)continue;
+                int overlap=Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top);
+                if(b.left<a.right||b.left-a.right>Math.max(a.height(),b.height())*3||overlap*2<Math.min(a.height(),b.height()))continue;
+                if(choice>=0){choice=-2;break;}choice=j;
+            }
+            if(choice>=0&&!claimed.contains(choice)){pairs.put(i,choice);claimed.add(choice);}
+        }
+        StringBuilder out=new StringBuilder();
+        for(int i=0;i<lines.size();i++){if(claimed.contains(i))continue;if(out.length()>0)out.append('\n');out.append(lines.get(i).getText());Integer count=pairs.get(i);if(count!=null)out.append(' ').append(lines.get(count).getText());}
+        return out.toString();
     }
 
     private static ArrayList<String> readBarcodes(Bitmap bitmap) {
