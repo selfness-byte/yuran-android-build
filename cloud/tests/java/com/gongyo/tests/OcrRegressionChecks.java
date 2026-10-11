@@ -96,6 +96,38 @@ public final class OcrRegressionChecks {
    String text=com.gongyo.photo.OcrReadPolicy.selectText(Arrays.asList(LABEL+"S2/M3",LABEL+"S2/M3"));
    equal(true,IntakeText.parse(text).ready);quantities(IntakeText.parse(text),2,3,0,0);
   });
+  test("arbitrary unreadable count token blocks whole photo",()->{
+   for(String count:new String[]{"M B","M Z","M |","XL B","M UNKNOWN","M #","M @","M 8B","m b","S2/M B/L4"}){
+    IntakeText.Result result=IntakeText.parse(LABEL+"S2\n"+count);
+    if(result.ready)throw new AssertionError("Unknown quantity was accepted: "+count);
+    quantities(result,2,0,0,0);
+   }
+  });
+  test("unknown quantity review survives raw text reload",()->{
+   String saved=LABEL+"S2\nM B";
+   equal(false,IntakeText.parse(new String(saved.toCharArray())).ready);
+  });
+  test("unknown quantity cannot disappear in a retry candidate",()->{
+   String selected=com.gongyo.photo.OcrReadPolicy.selectText(Arrays.asList(LABEL+"S2\nM B",LABEL+"S2"));
+   equal(false,IntakeText.parse(selected).ready);
+   equal(false,IntakeText.parse(new String(selected.toCharArray())).ready);
+  });
+  test("explicit color fields do not become unknown counts",()->{
+   for(String color:new String[]{"M","B","M/B","M BLUE","MELANGE GREY"}){
+    IntakeText.Result result=IntakeText.parse("STYLE: QA100\nCOLOR: "+color+"\nS2");
+    equal(true,result.ready);quantities(result,2,0,0,0);
+   }
+  });
+  test("garment fields and printed size lists keep clear counts ready",()->{
+   for(String garment:new String[]{"SIZE: 95(M)","SIZE: M","(S-M-L-XL)","S / M / L / XL"}){
+    IntakeText.Result result=IntakeText.parse(LABEL+garment+"\nS2/M3/L4/XL5");
+    equal(true,result.ready);quantities(result,2,3,4,5);
+   }
+  });
+  test("clear spaced counts retain original fast intake",()->{
+   IntakeText.Result result=IntakeText.parse(LABEL+"S 2 / M 3 / L 4 / XL 5");
+   equal(true,result.ready);quantities(result,2,3,4,5);
+  });
   System.out.println("OCR RESULT "+passed+" passed; "+failed+" failed");
   if(failed>0)System.exit(1);
  }
