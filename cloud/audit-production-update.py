@@ -76,19 +76,14 @@ def apk_inspect(name, path, sdk, analyzer):
         return
     manifest = command(analyzer, "manifest", "print", path)
     emit(name + ".manifest", manifest)
-    packages = command(analyzer, "dex", "packages", "--defined-only", path, limit=2000000)
-    classes = []
-    for line in packages["output"].splitlines():
-        fields = line.split()
-        if len(fields) >= 6 and fields[0] == "C":
-            cls = fields[-1]
-            if cls.startswith("com.gongyo.") and re.search("Update|Install|IncomingRegistrationActivity", cls):
-                classes.append(cls)
+    classes = ["com.gongyo.photo.AppUpdateActivity", "com.gongyo.photo.AppUpdateInstaller",
+               "com.gongyo.photo.AppUpdateReceiver", "com.gongyo.photo.AppUpdateState",
+               "com.gongyo.photo.AppUpdatePolicy", "com.gongyo.photo.AppUpdateNotice"]
+    if name == "photo":
+        classes.append("com.gongyo.yuranphoto.IncomingRegistrationActivity")
     emit(name + ".classes", classes)
     for cls in classes:
-        if "$" in cls or not re.search("Activity$|Worker$|Installer$|UpdateRequest$|UpdateSession", cls):
-            continue
-        code = command(analyzer, "dex", "code", "--class", cls, path, limit=400000)
+        code = command(analyzer, "dex", "code", "--class", cls, path, limit=700000)
         print("AUDIT_CODE_BEGIN " + name + " " + cls, flush=True)
         print(code["output"], flush=True)
         print("AUDIT_CODE_END " + name + " " + cls + " exit=" + str(code["exit"]), flush=True)
@@ -101,7 +96,7 @@ def main():
     def manifest_fetch():
         data, headers = get_bytes(HOST + "/version.json", 131072)
         return {"http": headers, "sha256": hashlib.sha256(data).hexdigest(),
-                "json": json.loads(data)}
+                "json": {"schema_version": json.loads(data).get("schema_version"), "apps": {key: value for key, value in json.loads(data).get("apps", {}).items() if key in ("com.gongyo.orderly", "com.gongyo.yuranphoto")}}}
     attempt("version_json", manifest_fetch)
     release_raw, release_headers = get_bytes(REPO + "/releases/tags/" + TAG, 262144)
     release = json.loads(release_raw)
@@ -137,21 +132,22 @@ def main():
             attempt(name + ".hosting_download", hosting_compare)
             if loaded:
                 attempt(name + ".inspection", lambda: apk_inspect(name, path, sdk, analyzer))
-        previous_raw, _ = get_bytes(REPO + "/releases/tags/v2026.10.12.2", 262144)
-        previous = json.loads(previous_raw)
-        for entry in previous["assets"]:
-            if not entry["name"].endswith(".apk"):
-                continue
-            def prior_signature(entry=entry):
-                data, _ = get_bytes(entry["browser_download_url"], 78643200)
-                digest = hashlib.sha256(data).hexdigest()
-                if "sha256:" + digest != entry["digest"]:
-                    raise ValueError("Prior release GitHub digest mismatch")
-                path = Path(folder) / entry["name"]
-                path.write_bytes(data)
-                return {"sha256": digest, "signer": command(
-                    sdk / "build-tools/35.0.0/apksigner", "verify", "--verbose", "--print-certs", path)}
-            attempt("previous." + entry["name"], prior_signature)
+        for previous_tag in ("v2026.10.10", "v2026.10.12.2"):
+            previous_raw, _ = get_bytes(REPO + "/releases/tags/" + previous_tag, 262144)
+            previous = json.loads(previous_raw)
+            for entry in previous["assets"]:
+                if not entry["name"].endswith(".apk"):
+                    continue
+                def prior_signature(entry=entry):
+                    data, _ = get_bytes(entry["browser_download_url"], 78643200)
+                    digest = hashlib.sha256(data).hexdigest()
+                    if "sha256:" + digest != entry["digest"]:
+                        raise ValueError("Prior release GitHub digest mismatch")
+                    path = Path(folder) / entry["name"]
+                    path.write_bytes(data)
+                    return {"sha256": digest, "signer": command(
+                        sdk / "build-tools/35.0.0/apksigner", "verify", "--verbose", "--print-certs", path)}
+                attempt("previous." + previous_tag + "." + entry["name"], prior_signature)
     emit("scope", "Public artifacts inspected only. No phone install, key access, app change, or release publication.")
 
 if __name__ == "__main__":
