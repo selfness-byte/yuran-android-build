@@ -1,0 +1,28 @@
+name: Audit public Yuran production updates
+on:
+  push:
+    branches: [codex/yuran-production-update-audit-20261012]
+permissions:
+  contents: read
+concurrency:
+  group: yuran-production-update-audit-20261012
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Read exact diagnostic revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin https://github.com/selfness-byte/yuran-android-build.git
+          git fetch --no-tags --depth=1 origin "$GITHUB_SHA"
+          git checkout --detach FETCH_HEAD
+      - name: Inspect public manifests and signed APKs without installing
+        shell: bash
+        run: |
+          export JAVA_HOME="$JAVA_HOME_17_X64"
+          python3 -m py_compile cloud/audit-production-update.py
+          python3 cloud/audit-production-update.py
